@@ -7,7 +7,7 @@ type IngestBody =
   | { mode: 'url'; url: string };
 
 type SleepInsert = {
-  user_id: string;
+  user_id: string | null;
   start_time: string;
   end_time: string;
   sleep_quality: number | null;
@@ -27,16 +27,9 @@ function parseCSV(text: string): CsvRow[] {
   });
 }
 
-async function ensureUserId(): Promise<string> {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) throw new Error('not signed in');
-  return user.id;
-}
-
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as IngestBody;
-    const uid = await ensureUserId();
 
     let records: CsvRow[] = [];
     if (body.mode === 'csv') {
@@ -52,12 +45,11 @@ export async function POST(req: Request) {
     const toInsert: SleepInsert[] = records.map((r) => {
       const startStr = r.start_time ?? (r.date ? `${r.date} ${r.sleep_start ?? '22:30'}` : '');
       const endStr   = r.end_time   ?? (r.date ? `${r.date} ${r.sleep_end   ?? '06:30'}` : '');
-
       const q = r.sleep_quality ?? r.quality;
       const quality = q !== undefined && q !== '' ? Number(q) : null;
 
       return {
-        user_id: uid,
+        user_id: null, // 👈 ไม่มีล็อกอินแล้ว
         start_time: new Date(startStr).toISOString(),
         end_time: new Date(endStr).toISOString(),
         sleep_quality: Number.isFinite(quality ?? NaN) ? (quality as number) : null,
@@ -66,6 +58,7 @@ export async function POST(req: Request) {
       };
     });
 
+    // ใส่ทีละก้อนเพื่อกัน payload ใหญ่
     const chunkSize = 500;
     let inserted = 0;
     for (let i = 0; i < toInsert.length; i += chunkSize) {
@@ -76,7 +69,7 @@ export async function POST(req: Request) {
     }
 
     await supabase.from('dataset_imports').insert({
-      user_id: uid,
+      user_id: null,
       source_name: 'Generic CSV',
       import_type: body.mode === 'url' ? 'url_fetch' : 'csv_upload',
       file_url: body.mode === 'url' ? body.url : null,
