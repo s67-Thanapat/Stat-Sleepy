@@ -22,9 +22,7 @@ function parseCSV(text: string): CsvRow[] {
   return lines.slice(1).map((l) => {
     const cols = l.split(',').map((s) => s.trim());
     const rec: CsvRow = {};
-    header.forEach((h, i) => {
-      rec[h] = cols[i] ?? undefined;
-    });
+    header.forEach((h, i) => { rec[h] = cols[i] ?? undefined; });
     return rec;
   });
 }
@@ -52,14 +50,11 @@ export async function POST(req: Request) {
     }
 
     const toInsert: SleepInsert[] = records.map((r) => {
-      const startStr =
-        r.start_time ?? (r.date ? `${r.date} ${r.sleep_start ?? '22:30'}` : '');
-      const endStr =
-        r.end_time ?? (r.date ? `${r.date} ${r.sleep_end ?? '06:30'}` : '');
+      const startStr = r.start_time ?? (r.date ? `${r.date} ${r.sleep_start ?? '22:30'}` : '');
+      const endStr   = r.end_time   ?? (r.date ? `${r.date} ${r.sleep_end   ?? '06:30'}` : '');
 
       const q = r.sleep_quality ?? r.quality;
-      const quality =
-        q !== undefined && q !== null && q !== '' ? Number(q) : null;
+      const quality = q !== undefined && q !== '' ? Number(q) : null;
 
       return {
         user_id: uid,
@@ -71,7 +66,6 @@ export async function POST(req: Request) {
       };
     });
 
-    // ใส่ทีละก้อนกัน payload ใหญ่
     const chunkSize = 500;
     let inserted = 0;
     for (let i = 0; i < toInsert.length; i += chunkSize) {

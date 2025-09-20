@@ -14,6 +14,7 @@ export default function UploadPage(){
       body: JSON.stringify({ mode:'csv', text })
     });
     const j = await res.json();
+    if(!j.ok) return alert('Error: ' + j.error);
     alert(`นำเข้าแล้ว: ${j.inserted} แถว`);
   }
 
@@ -25,6 +26,7 @@ export default function UploadPage(){
       body: JSON.stringify({ mode:'url', url })
     });
     const j = await res.json();
+    if(!j.ok) return alert('Error: ' + j.error);
     alert(`นำเข้าแล้ว: ${j.inserted} แถว`);
   }
 
