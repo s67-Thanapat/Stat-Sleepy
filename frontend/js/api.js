@@ -23,18 +23,29 @@ async function fetchAllSessions(limit = 500) {
 }
 
 // -------------------- CREATE: เพิ่มแถวเดียวจากฟอร์ม --------------------
-async function createSession({ start_time, end_time, sleep_quality = null, note = null }) {
+// ✅ ใหม่: เพิ่มรองรับ height_cm, weight_kg, age_years
+async function createSession({
+  start_time,
+  end_time,
+  sleep_quality = null,
+  note = null,
+  height_cm = null,
+  weight_kg = null,
+  age_years = null
+}) {
   const url = `${SUPABASE_URL}/rest/v1/sleep_sessions`;
-  const body = [
-    {
-      user_id: null,
-      start_time,
-      end_time,
-      sleep_quality,
-      note,
-      source: 'form',
-    },
-  ];
+  const body = [{
+    user_id: null,
+    start_time,
+    end_time,
+    sleep_quality,
+    note,
+    source: 'form',
+    // ฟิลด์ใหม่
+    height_cm,
+    weight_kg,
+    age_years
+  }];
 
   const res = await fetch(url, {
     method: 'POST',
@@ -42,9 +53,9 @@ async function createSession({ start_time, end_time, sleep_quality = null, note 
       apikey: SUPABASE_ANON_KEY,
       Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       'Content-Type': 'application/json',
-      Prefer: 'return=representation', // คืนแถวที่ insert (มี id)
+      Prefer: 'return=representation'
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(body)
   });
 
   if (res.ok) return res.json();
@@ -52,6 +63,7 @@ async function createSession({ start_time, end_time, sleep_quality = null, note 
   try { detail = JSON.stringify(JSON.parse(detail)); } catch {}
   throw new Error(`REST ${res.status} ${detail}`);
 }
+
 
 // -------------------- IMPORT: อัปโหลด CSV เป็นข้อความ --------------------
 async function ingestCsvText(text) {
