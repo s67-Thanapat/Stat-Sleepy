@@ -13,6 +13,7 @@
     </header>
 
     <main class="container">
+      <!-- อัปโหลดไฟล์ CSV -->
       <section class="panel">
         <h2>อัปโหลด CSV</h2>
         <input type="file" id="fileInput" accept=".csv" />
@@ -20,16 +21,47 @@
         <p class="muted">รองรับ: <code>start_time,end_time,sleep_quality,note</code> หรือ <code>date,sleep_start,sleep_end,quality</code></p>
       </section>
 
+      <!-- ดึงจาก URL CSV -->
       <section class="panel">
         <h2>ดึงจาก URL CSV</h2>
         <input type="url" id="urlInput" placeholder="https://example.com/sleep.csv" />
         <button id="btnFetch">ดึงและนำเข้า</button>
         <p class="muted">เช่น Raw GitHub / Google Sheets export CSV / Dropbox (?dl=1)</p>
       </section>
+
+      <!-- ✅ ใหม่: ฟอร์มบันทึก 1 รายการ -->
+      <section class="panel">
+        <h2>บันทึกด้วยฟอร์ม (เพิ่ม 1 รายการ)</h2>
+
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+          <label>วันที่
+            <input type="date" id="fDate" required />
+          </label>
+          <label>เวลาเริ่มนอน
+            <input type="time" id="fStart" required />
+          </label>
+          <label>เวลาตื่น
+            <input type="time" id="fEnd" required />
+          </label>
+          <label>คุณภาพการนอน (0–100)
+            <input type="number" id="fQuality" min="0" max="100" step="1" placeholder="เช่น 80" />
+          </label>
+        </div>
+
+        <label style="display:block;margin-top:12px;">บันทึกเพิ่มเติม
+          <input type="text" id="fNote" placeholder="เช่น ฝันดี / นอนดึก" />
+        </label>
+
+        <button id="btnSave" style="margin-top:12px;">บันทึกลงฐานข้อมูล</button>
+        <p id="formMsg" class="muted" style="margin-top:8px;"></p>
+      </section>
     </main>
 
+    <!-- libs -->
     <script src="./js/config.js"></script>
     <script src="./js/api.js"></script>
+
+    <!-- logic สำหรับปุ่มเดิม (อัปโหลด/URL) -->
     <script>
       const fileInput = document.getElementById('fileInput');
       const btnUpload = document.getElementById('btnUpload');
@@ -53,6 +85,41 @@
           const r = await ingestFromUrl(url);
           alert(`นำเข้าแล้ว: ${r.inserted} แถว`);
         } catch (e) { alert('Error: ' + (e?.message || e)); }
+      });
+    </script>
+
+    <!-- ✅ ใหม่: logic ฟอร์มบันทึก 1 รายการ -->
+    <script>
+      const btnSave = document.getElementById('btnSave');
+      const formMsg = document.getElementById('formMsg');
+
+      btnSave.addEventListener('click', async () => {
+        const d  = document.getElementById('fDate').value;      // YYYY-MM-DD
+        const st = document.getElementById('fStart').value;     // HH:mm
+        const et = document.getElementById('fEnd').value;       // HH:mm
+        const qv = document.getElementById('fQuality').value;
+        const note = document.getElementById('fNote').value.trim();
+
+        if (!d || !st || !et) {
+          formMsg.textContent = 'กรอก วันที่ / เวลาเริ่ม / เวลาตื่น ให้ครบก่อนนะ';
+          return;
+        }
+
+        const startLocal = new Date(`${d}T${st}:00`);
+        let endLocal     = new Date(`${d}T${et}:00`);
+        if (endLocal <= startLocal) endLocal.setDate(endLocal.getDate() + 1);
+
+        try {
+          const rows = await createSession({
+            start_time: startLocal.toISOString(),
+            end_time: endLocal.toISOString(),
+            sleep_quality: qv !== '' ? Number(qv) : null,
+            note: note || null
+          });
+          formMsg.textContent = `บันทึกสำเร็จ (id: ${rows[0]?.id ?? '-'})`;
+        } catch (e) {
+          formMsg.textContent = 'บันทึกไม่สำเร็จ: ' + (e?.message || e);
+        }
       });
     </script>
   </body>
