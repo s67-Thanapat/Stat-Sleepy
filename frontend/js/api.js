@@ -1,3 +1,8 @@
+if (!window.CONFIG?.SUPABASE_URL || !window.CONFIG?.SUPABASE_ANON_KEY) {
+  throw new Error('CONFIG not loaded');
+}
+const { SUPABASE_URL, SUPABASE_ANON_KEY, BACKEND_URL } = window.CONFIG;
+
 // เพิ่ม 1 แถวลงตาราง sleep_sessions ผ่าน Supabase REST
 async function createSession({ start_time, end_time, sleep_quality = null, note = null }) {
   const url = `${SUPABASE_URL}/rest/v1/sleep_sessions`;
