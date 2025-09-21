@@ -1,4 +1,4 @@
-// ✅ ใหม่: เพิ่ม 1 แถวลงตาราง sleep_sessions ผ่าน Supabase REST
+// เพิ่ม 1 แถวลงตาราง sleep_sessions ผ่าน Supabase REST
 async function createSession({ start_time, end_time, sleep_quality = null, note = null }) {
   const url = `${SUPABASE_URL}/rest/v1/sleep_sessions`;
   const body = [{
@@ -16,14 +16,20 @@ async function createSession({ start_time, end_time, sleep_quality = null, note 
       apikey: SUPABASE_ANON_KEY,
       Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       'Content-Type': 'application/json',
-      Prefer: 'return=representation'
+      Prefer: 'return=representation'  // ให้คืนแถวที่ insert (มี id)
+      // 'Accept-Profile': 'public',   // ปกติไม่ต้อง ถ้าใช้ schema public อยู่แล้ว
+      // 'Content-Profile': 'public'
     },
     body: JSON.stringify(body)
   });
 
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`REST ${res.status} ${t}`);
+  // Supabase REST มักตอบ 201 Created
+  if (res.ok) {
+    return res.json(); // [{ id, ... }]
   }
-  return res.json(); // array ของแถวที่เพิ่ง insert (คืน id ด้วย)
+
+  // พยายามอ่านรายละเอียด error เป็น JSON ก่อน (ถ้ามี)
+  let detail = await res.text();
+  try { detail = JSON.stringify(JSON.parse(detail)); } catch {}
+  throw new Error(`REST ${res.status} ${detail}`);
 }
