@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>อัปโหลด/นำเข้าข้อมูล</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <header class="container">
+      <h1>นำเข้าข้อมูลการนอน</h1>
+      <nav><a href="./index.html">← กลับหน้าหลัก</a></nav>
+    </header>
+
+    <main class="container">
+      <section class="panel">
+        <h2>อัปโหลด CSV</h2>
+        <input type="file" id="fileInput" accept=".csv" />
+        <button id="btnUpload">อัปโหลด</button>
+        <p class="muted">รองรับ: <code>start_time,end_time,sleep_quality,note</code> หรือ <code>date,sleep_start,sleep_end,quality</code></p>
+      </section>
+
+      <section class="panel">
+        <h2>ดึงจาก URL CSV</h2>
+        <input type="url" id="urlInput" placeholder="https://example.com/sleep.csv" />
+        <button id="btnFetch">ดึงและนำเข้า</button>
+        <p class="muted">เช่น Raw GitHub / Google Sheets export CSV / Dropbox (?dl=1)</p>
+      </section>
+    </main>
+
+    <script src="./js/config.js"></script>
+    <script src="./js/api.js"></script>
+    <script>
+      const fileInput = document.getElementById('fileInput');
+      const btnUpload = document.getElementById('btnUpload');
+      const urlInput  = document.getElementById('urlInput');
+      const btnFetch  = document.getElementById('btnFetch');
+
+      btnUpload.addEventListener('click', async () => {
+        const f = fileInput.files?.[0];
+        if (!f) return alert('เลือกไฟล์ก่อน');
+        const text = await f.text();
+        try {
+          const r = await ingestCsvText(text);
+          alert(`นำเข้าแล้ว: ${r.inserted} แถว`);
+        } catch (e) { alert('Error: ' + (e?.message || e)); }
+      });
+
+      btnFetch.addEventListener('click', async () => {
+        const url = urlInput.value.trim();
+        if (!url) return alert('ใส่ URL ก่อน');
+        try {
+          const r = await ingestFromUrl(url);
+          alert(`นำเข้าแล้ว: ${r.inserted} แถว`);
+        } catch (e) { alert('Error: ' + (e?.message || e)); }
+      });
+    </script>
+  </body>
+</html>
