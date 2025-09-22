@@ -59,22 +59,55 @@
     </form>
     <a href="#" class="forgot">ลืมรหัสผ่าน?</a>
   </div>
-
+  
   <script>
-    const form = document.getElementById("loginForm");
+    // ✅ ใส่ค่าโปรเจกต์ของคุณจาก Supabase
+    const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const msg = document.getElementById("msg");
+    const form = document.getElementById("loginForm");
+    const emailEl = document.getElementById("email");
+    const passEl = document.getElementById("password");
 
-    // ตัวอย่างเช็คง่าย ๆ (กรณีต้องการทดสอบ email==password)
-    form.addEventListener("submit", (e) => {
+    // ✅ จัดการ login
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
+      msg.style.color = "black";
+      msg.textContent = "กำลังเข้าสู่ระบบ...";
 
-      if (email === password) {
-        // ✅ ผ่าน → ไป admin.html
-        window.location.href = "admin.html";
+      const email = emailEl.value.trim();
+      const password = passEl.value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        msg.style.color = "red";
+        msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${error.message}`;
+        console.warn("Login error:", error);
+        return;
+      }
+      // ✅ สำเร็จ → ไปหน้า admin.html หรือ next
+      const next = new URLSearchParams(location.search).get("next") || "admin.html";
+      location.href = next;
+    });
+
+    // ✅ ลืมรหัสผ่าน
+    document.getElementById("forgot").addEventListener("click", async (e) => {
+      e.preventDefault();
+      const email = emailEl.value.trim();
+      if (!email) { msg.style.color = "red"; msg.textContent = "กรอกอีเมลก่อน"; return; }
+
+      const redirectTo = `${location.origin}/reset.html`; // ต้องสร้าง reset.html
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+
+      if (error) {
+        msg.style.color = "red";
+        msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`;
       } else {
-        msg.textContent = "เข้าสู่ระบบไม่สำเร็จ: อีเมลกับรหัสต้องตรงกัน";
+        msg.style.color = "green";
+        msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว";
       }
     });
   </script>
