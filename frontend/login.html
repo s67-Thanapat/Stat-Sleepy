@@ -6,47 +6,47 @@
   <title>เข้าสู่ระบบแอดมิน</title>
   <style>
     body {
+      font-family: sans-serif;
+      background: #f8f9fb;
+      color: #111827;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background: #f7f8fc;
-      font-family: sans-serif;
     }
     .card {
       background: #fff;
       padding: 2rem;
       border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,.1);
-      text-align: center;
+      box-shadow: 0 5px 20px rgba(0,0,0,.1);
       width: 320px;
+      text-align: center;
     }
-    input, button {
-      width: 100%;            /* ✅ ให้กว้างเท่ากัน */
+    input {
+      width: 100%;
       padding: 10px;
       margin: 8px 0;
       border: 1px solid #ddd;
       border-radius: 6px;
-      box-sizing: border-box; /* ป้องกันบวก padding เกินขอบ */
     }
     button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 12px;
+      border: none;
       background: #2563eb;
       color: white;
+      border-radius: 6px;
       font-weight: bold;
-      border: none;
       cursor: pointer;
     }
     button:hover { background: #1e40af; }
-    #msg { margin-top: 12px; font-size: .9rem; color: red; }
-    .forgot {
-      display: block;
-      margin-top: 10px;
-      font-size: 0.9rem;
-      color: #2563eb;
-      text-decoration: none;
-    }
-    .forgot:hover { text-decoration: underline; }
+    #msg { margin-top: 12px; font-size: 0.9rem; color: red; }
+    a { font-size: 0.9rem; color: #2563eb; cursor: pointer; }
   </style>
+
+  <!-- ✅ Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="card">
@@ -57,9 +57,11 @@
       <button type="submit">Login</button>
       <div id="msg"></div>
     </form>
-    <a href="#" class="forgot">ลืมรหัสผ่าน?</a>
+    <p style="margin-top:10px;">
+      <a id="forgot">ลืมรหัสผ่าน?</a>
+    </p>
   </div>
-  
+
   <script>
     // ✅ ใส่ค่าโปรเจกต์ของคุณจาก Supabase
     const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
