@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>เข้าสู่ระบบแอดมิน</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+  <!-- ถ้ายังไม่ได้โหลด SDK ใน config.js ให้เปิดคอมเมนต์บรรทัดล่างนี้ -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> -->
+</head>
+<body>
+  <main class="container" style="max-width:420px;">
+    <h1>เข้าสู่ระบบแอดมิน</h1>
+    <form id="loginForm" class="panel" onsubmit="return false;">
+      <label>อีเมล
+        <input id="email" type="email" placeholder="admin@example.com" required />
+      </label>
+      <label>รหัสผ่าน
+        <input id="password" type="password" placeholder="••••••••" required />
+      </label>
+      <button id="btnLogin" class="btn" type="submit">Login</button>
+      <p id="msg" class="muted" style="margin-top:8px;"></p>
+    </form>
+    <p class="muted">ยังไม่มีบัญชี? ให้ผู้ดูแลสร้างผู้ใช้ใน Supabase Auth ก่อน</p>
+  </main>
+
+  <script src="./js/config.js"></script>
+  <script>
+  (function(){
+    const form = document.getElementById('loginForm');
+    const msg  = document.getElementById('msg');
+
+    function getQueryParam(name) {
+      const url = new URL(location.href);
+      return url.searchParams.get(name);
+    }
+
+    form.addEventListener('submit', async () => {
+      msg.textContent = '';
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        const next = getQueryParam('next') || 'admin.html';
+        location.href = `./${next}`;
+      } catch (e) {
+        msg.textContent = 'เข้าสู่ระบบไม่สำเร็จ: ' + (e?.message || e);
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

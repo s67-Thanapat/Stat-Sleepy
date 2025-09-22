@@ -9,7 +9,14 @@
   <body>
     <header class="container">
       <h1>นำเข้าข้อมูลการนอน</h1>
-      <nav><a href="./index.html">← กลับหน้าหลัก</a></nav>
+      <nav style="display:flex;gap:12px;align-items:center;">
+        <a href="./index.html">← กลับหน้าหลัก</a>
+
+        <!-- ⭐ เพิ่มใหม่: แสดงสถานะผู้ใช้ + ปุ่ม Login/Logout -->
+        <span id="authUser" class="muted" style="margin-left:auto;"></span>
+        <button id="btnLogin" class="btn">Login</button>
+        <button id="btnLogout" class="btn" style="display:none;">Logout</button>
+      </nav>
     </header>
 
     <main class="container">
@@ -29,49 +36,52 @@
         <p class="muted">เช่น Raw GitHub / Google Sheets export CSV / Dropbox (?dl=1)</p>
       </section>
 
-      <!-- ✅ ใหม่: ฟอร์มบันทึก 1 รายการ -->
+      <!-- ฟอร์มบันทึก 1 รายการ -->
       <section class="panel">
-  <h2>บันทึกด้วยฟอร์ม (เพิ่ม 1 รายการ)</h2>
+        <h2>บันทึกด้วยฟอร์ม (เพิ่ม 1 รายการ)</h2>
 
-  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
-    <label>วันที่
-      <input type="date" id="fDate" required />
-    </label>
-    <label>เวลาเริ่มนอน
-      <input type="time" id="fStart" required />
-    </label>
-    <label>เวลาตื่น
-      <input type="time" id="fEnd" required />
-    </label>
-    <label>คุณภาพการนอน (0–100)
-      <input type="number" id="fQuality" min="0" max="100" step="1" placeholder="เช่น 80" />
-    </label>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+          <label>วันที่
+            <input type="date" id="fDate" required />
+          </label>
+          <label>เวลาเริ่มนอน
+            <input type="time" id="fStart" required />
+          </label>
+          <label>เวลาตื่น
+            <input type="time" id="fEnd" required />
+          </label>
+          <label>คุณภาพการนอน (0–100)
+            <input type="number" id="fQuality" min="0" max="100" step="1" placeholder="เช่น 80" />
+          </label>
 
-    <!-- ✅ ใหม่ -->
-    <label>ส่วนสูง (ซม.)
-      <input type="number" id="fHeight" min="50" max="250" step="0.1" placeholder="เช่น 170.5" />
-    </label>
-    <label>น้ำหนัก (กก.)
-      <input type="number" id="fWeight" min="20" max="300" step="0.1" placeholder="เช่น 60.0" />
-    </label>
-    <label>อายุ (ปี)
-      <input type="number" id="fAge" min="1" max="120" step="1" placeholder="เช่น 21" />
-    </label>
-  </div>
+          <!-- ฟิลด์ใหม่ (ยังไม่บันทึกลง DB ถ้าตารางยังไม่มีคอลัมน์) -->
+          <label>ส่วนสูง (ซม.)
+            <input type="number" id="fHeight" min="50" max="250" step="0.1" placeholder="เช่น 170.5" />
+          </label>
+          <label>น้ำหนัก (กก.)
+            <input type="number" id="fWeight" min="20" max="300" step="0.1" placeholder="เช่น 60.0" />
+          </label>
+          <label>อายุ (ปี)
+            <input type="number" id="fAge" min="1" max="120" step="1" placeholder="เช่น 21" />
+          </label>
+        </div>
 
-  <label style="display:block;margin-top:12px;">บันทึกเพิ่มเติม
-    <input type="text" id="fNote" placeholder="เช่น ฝันดี / นอนดึก" />
-  </label>
+        <label style="display:block;margin-top:12px;">บันทึกเพิ่มเติม
+          <input type="text" id="fNote" placeholder="เช่น ฝันดี / นอนดึก" />
+        </label>
 
-  <button id="btnSave" style="margin-top:12px;">บันทึกลงฐานข้อมูล</button>
-  <p id="formMsg" class="muted" style="margin-top:8px;"></p>
-</section>
-
+        <button id="btnSave" style="margin-top:12px;">บันทึกลงฐานข้อมูล</button>
+        <p id="formMsg" class="muted" style="margin-top:8px;"></p>
+      </section>
     </main>
 
     <!-- libs -->
+    <!-- ถ้ายังไม่มี @supabase/supabase-js ให้เอาคอมเมนต์บรรทัดนี้ออก -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> -->
     <script src="./js/config.js"></script>
     <script src="./js/api.js"></script>
+    <!-- ⭐ เพิ่มใหม่: ตัวช่วย Auth (ปุ่ม Login/Logout + requireAuth) -->
+    <script src="./js/auth.js"></script>
 
     <!-- logic สำหรับปุ่มเดิม (อัปโหลด/URL) -->
     <script>
@@ -100,7 +110,7 @@
       });
     </script>
 
-    <!-- ✅ ใหม่: logic ฟอร์มบันทึก 1 รายการ -->
+    <!-- logic ฟอร์มบันทึก 1 รายการ -->
     <script>
       const btnSave = document.getElementById('btnSave');
       const formMsg = document.getElementById('formMsg');
