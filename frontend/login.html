@@ -1,56 +1,97 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>เข้าสู่ระบบแอดมิน</title>
-  <link rel="stylesheet" href="./css/styles.css" />
-  <!-- ถ้ายังไม่ได้โหลด SDK ใน config.js ให้เปิดคอมเมนต์บรรทัดล่างนี้ -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> -->
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f8f9fb;
+      color: #111827;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .card {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,.1);
+      width: 320px;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 12px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1e40af;
+    }
+    #msg {
+      margin-top: 12px;
+      color: red;
+      font-size: 0.9rem;
+    }
+  </style>
+
+  <!-- ✅ Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <main class="container" style="max-width:420px;">
-    <h1>เข้าสู่ระบบแอดมิน</h1>
-    <form id="loginForm" class="panel" onsubmit="return false;">
-      <label>อีเมล
-        <input id="email" type="email" placeholder="admin@example.com" required />
-      </label>
-      <label>รหัสผ่าน
-        <input id="password" type="password" placeholder="••••••••" required />
-      </label>
-      <button id="btnLogin" class="btn" type="submit">Login</button>
-      <p id="msg" class="muted" style="margin-top:8px;"></p>
+  <div class="card">
+    <h2>เข้าสู่ระบบแอดมิน</h2>
+    <form id="loginForm">
+      <input id="email" type="email" placeholder="อีเมล" required />
+      <input id="password" type="password" placeholder="รหัสผ่าน" required />
+      <button type="submit">Login</button>
+      <div id="msg"></div>
     </form>
-    <p class="muted">ยังไม่มีบัญชี? ให้ผู้ดูแลสร้างผู้ใช้ใน Supabase Auth ก่อน</p>
-  </main>
+  </div>
 
-  <script src="./js/config.js"></script>
   <script>
-  (function(){
-    const form = document.getElementById('loginForm');
-    const msg  = document.getElementById('msg');
+    // ✅ ใส่ค่าโปรเจกต์ของคุณ
+    const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";
 
-    function getQueryParam(name) {
-      const url = new URL(location.href);
-      return url.searchParams.get(name);
-    }
+    // ✅ สร้าง client
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    form.addEventListener('submit', async () => {
-      msg.textContent = '';
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
+    // ✅ จัดการ login
+    const loginForm = document.getElementById("loginForm");
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
 
-        const next = getQueryParam('next') || 'admin.html';
-        location.href = `./${next}`;
-      } catch (e) {
-        msg.textContent = 'เข้าสู่ระบบไม่สำเร็จ: ' + (e?.message || e);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (error) {
+        document.getElementById("msg").innerText = "เข้าสู่ระบบไม่สำเร็จ: " + error.message;
+      } else {
+        // ✅ สำเร็จ → ไปหน้า admin
+        window.location.href = "admin.html";
       }
     });
-  })();
   </script>
 </body>
 </html>
