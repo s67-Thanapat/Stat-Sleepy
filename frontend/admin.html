@@ -1,53 +1,74 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>แอดมิน • ระบบหลังบ้าน</title>
-  <link rel="stylesheet" href="./css/styles.css" />
-  <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> --> <!-- เปิดถ้ายังไม่ได้โหลดใน config.js -->
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>หน้าผู้ดูแลระบบ</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f8f9fb;
+      color: #111827;
+      padding: 2rem;
+    }
+    .card {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,.1);
+      max-width: 500px;
+      margin: auto;
+      text-align: center;
+    }
+    button {
+      padding: 10px 16px;
+      margin-top: 16px;
+      border: none;
+      background: #dc2626;
+      color: white;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { background: #b91c1c; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <header class="container">
-    <h1>แอดมิน • ระบบหลังบ้าน</h1>
-    <nav style="display:flex;gap:12px;align-items:center;">
-      <a href="./index.html">← หน้าหลัก</a>
-      <span id="authUser" class="muted" style="margin-left:auto;"></span>
-      <button id="btnLogin" class="btn">Login</button>
-      <button id="btnLogout" class="btn" style="display:none;">Logout</button>
-    </nav>
-  </header>
+  <div class="card">
+    <h2>สวัสดี แอดมิน</h2>
+    <p id="userInfo">กำลังโหลดข้อมูล...</p>
+    <button id="logoutBtn">Logout</button>
+  </div>
 
-  <main class="container">
-    <section class="panel">
-      <h2>จัดการข้อมูล</h2>
-      <p class="muted">ต้องล็อกอินก่อนจึงจะเข้าหน้านี้ได้</p>
-
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-        <button id="btnRefresh" class="btn">โหลดรายการล่าสุด</button>
-        <!-- TODO: เติมปุ่ม/ฟอร์ม แก้ไข/ลบ/เพิ่มข้อมูลจริงที่นี่ -->
-      </div>
-
-      <pre id="out" style="margin-top:12px;white-space:pre-wrap;"></pre>
-    </section>
-  </main>
-
-  <script src="./js/config.js"></script>
-  <script src="./js/auth.js"></script>
   <script>
-    // บังคับต้องล็อกอินก่อนเห็นหน้า
-    (async () => {
-      const ok = await requireAuth(true);
-      if (!ok) return;
+    // ✅ ใส่ค่าโปรเจกต์จริงของคุณ
+    const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      const out = document.getElementById('out');
-      const { data: { user } } = await supabase.auth.getUser();
-      out.textContent = `ยินดีต้อนรับแอดมิน: ${user?.email || '-'}`;
-    })();
+    const userInfo = document.getElementById("userInfo");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-    // ปุ่มตัวอย่าง (คุณเปลี่ยนไปเรียก API ของคุณได้)
-    document.getElementById('btnRefresh')?.addEventListener('click', async () => {
-      alert('ตัวอย่าง: โหลดข้อมูลล่าสุด (ต่อยอดเรียก Supabase REST/SQL ของคุณ)');
+    // ✅ ตรวจสอบ session
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // ไม่มีการ login → กลับไปหน้า login
+        window.location.href = "login.html";
+        return;
+      }
+      // มี session → แสดงข้อมูลผู้ใช้
+      const user = session.user;
+      userInfo.textContent = "เข้าสู่ระบบด้วย: " + user.email;
+    }
+
+    checkSession();
+
+    // ✅ Logout
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "login.html";
     });
   </script>
 </body>
