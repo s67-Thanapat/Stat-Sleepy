@@ -3,73 +3,310 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>หน้าผู้ดูแลระบบ</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #f8f9fb;
-      color: #111827;
-      padding: 2rem;
-    }
-    .card {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 5px 20px rgba(0,0,0,.1);
-      max-width: 500px;
-      margin: auto;
-      text-align: center;
-    }
-    button {
-      padding: 10px 16px;
-      margin-top: 16px;
-      border: none;
-      background: #dc2626;
-      color: white;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover { background: #b91c1c; }
-  </style>
+  <title>แอดมิน • จัดการข้อมูล</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{--bg:#f7f8fc;--card:#fff;--fg:#0b1220;--muted:#6b7280;--blue:#2563eb;--red:#dc2626;--green:#059669;}
+    body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto;}
+    header{padding:18px 24px;background:#eef2ff;border-bottom:1px solid #e5e7eb;font-weight:700}
+    .wrap{max-width:1100px;margin:28px auto;padding:0 16px}
+    .card{background:var(--card);border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.06);padding:18px;margin-bottom:18px}
+    h2{margin:6px 0 12px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    input,select,button,textarea{padding:10px;border:1px solid #e5e7eb;border-radius:10px}
+    input,select,textarea{background:#fff;min-width:200px}
+    button{cursor:pointer;font-weight:700}
+    .btn{background:var(--blue);color:#fff;border:none}
+    .btn-muted{background:#e5e7eb;color:#111}
+    .btn-red{background:var(--red);color:#fff;border:none}
+    .btn-green{background:var(--green);color:#fff;border:none}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{border-top:1px solid #eef0f4;padding:8px 10px;text-align:left;font-size:14px}
+    th{background:#fafbff}
+    .right{margin-left:auto}
+    .muted{color:var(--muted);font-size:13px}
+    .center{display:flex;justify-content:center;align-items:center}
+    .pill{padding:4px 8px;border-radius:999px;background:#eef2ff;font-weight:600}
+    .danger{color:var(--red)}
+    .ok{color:var(--green)}
+    .hidden{display:none}
+  </style>
 </head>
 <body>
-  <div class="card">
-    <h2>สวัสดี แอดมิน</h2>
-    <p id="userInfo">กำลังโหลดข้อมูล...</p>
-    <button id="logoutBtn">Logout</button>
+<header>
+  แอดมิน • จัดการข้อมูล
+</header>
+
+<div class="wrap">
+  <!-- กล่องสถานะผู้ใช้ -->
+  <div class="card" id="whoCard">
+    <div class="row" style="align-items:center">
+      <div>
+        <div id="who">กำลังตรวจสอบ session...</div>
+        <div class="muted">หากไม่มีการเข้าสู่ระบบ จะส่งกลับไปหน้า login</div>
+      </div>
+      <div class="right">
+        <button id="logoutBtn" class="btn-red">Logout</button>
+      </div>
+    </div>
   </div>
 
-  <script>
-    // ✅ ใส่ค่าโปรเจกต์จริงของคุณ
-    const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <!-- โปรไฟล์ -->
+  <div class="card">
+    <h2>โปรไฟล์ผู้ใช้</h2>
+    <div class="row">
+      <input id="display_name" placeholder="ชื่อที่แสดง (ไม่บังคับ)">
+      <input id="height_cm" type="number" step="0.1" placeholder="ส่วนสูง (ซม.)">
+      <input id="weight_kg" type="number" step="0.1" placeholder="น้ำหนัก (กก.)">
+      <input id="age_years" type="number" step="1" placeholder="อายุ (ปี)">
+      <button id="saveProfile" class="btn-green">บันทึกโปรไฟล์</button>
+    </div>
+    <div class="muted" id="profileMsg"></div>
+  </div>
 
-    const userInfo = document.getElementById("userInfo");
-    const logoutBtn = document.getElementById("logoutBtn");
+  <!-- เพิ่ม session -->
+  <div class="card">
+    <h2>เพิ่มบันทึกการนอน</h2>
+    <div class="row">
+      <input id="start_time" type="datetime-local">
+      <input id="end_time" type="datetime-local">
+      <input id="sleep_quality" type="number" min="1" max="100" placeholder="คุณภาพ (1–100)">
+      <input id="note" placeholder="บันทึก (ไม่บังคับ)">
+      <button id="addSession" class="btn">เพิ่ม</button>
+    </div>
+    <div class="muted">เวลาเป็นเวลาเครื่องของคุณ (local time) — ฝั่งฐานข้อมูลใช้ <code>timestamptz</code></div>
+    <div class="muted" id="addMsg"></div>
+  </div>
 
-    // ✅ ตรวจสอบ session
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        // ไม่มีการ login → กลับไปหน้า login
-        window.location.href = "login.html";
-        return;
-      }
-      // มี session → แสดงข้อมูลผู้ใช้
-      const user = session.user;
-      userInfo.textContent = "เข้าสู่ระบบด้วย: " + user.email;
+  <!-- ตาราง session -->
+  <div class="card">
+    <div class="row" style="align-items:center">
+      <h2 style="margin-right:auto">บันทึกการนอน</h2>
+      <button id="refresh" class="btn-muted">รีโหลด</button>
+    </div>
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>เริ่ม</th>
+          <th>จบ</th>
+          <th>นาที</th>
+          <th>คุณภาพ</th>
+          <th>โน้ต</th>
+          <th>จัดการ</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="7" class="center muted">กำลังโหลด...</td></tr>
+      </tbody>
+    </table>
+    <div class="row" style="margin-top:8px">
+      <button id="prev" class="btn-muted">ก่อนหน้า</button>
+      <div class="pill" id="pageInfo">หน้า 1</div>
+      <button id="next" class="btn-muted">ถัดไป</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ⬇️ ใส่ค่าจริงของโปรเจกต์คุณ
+  const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let user = null;
+  let page = 1;
+  const pageSize = 10;
+  let total = 0;
+
+  const whoEl = document.getElementById('who');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  // ===== Session check =====
+  async function requireLogin() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      location.href = "login.html?next=admin.html";
+      return;
+    }
+    user = session.user;
+    whoEl.innerHTML = `เข้าสู่ระบบด้วย: <b>${user.email}</b>`;
+    await loadProfile();
+    await loadSessions();
+  }
+
+  logoutBtn.onclick = async () => {
+    await supabase.auth.signOut();
+    location.href = "login.html";
+  };
+
+  // ===== Profiles CRUD (upsert ค่าของผู้ใช้ปัจจุบัน) =====
+  const profileMsg = document.getElementById('profileMsg');
+  async function loadProfile() {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // not found
+      profileMsg.textContent = "โหลดโปรไฟล์ไม่สำเร็จ: " + error.message;
+      return;
     }
 
-    checkSession();
+    const p = data || {};
+    document.getElementById('display_name').value = p.display_name || '';
+    document.getElementById('height_cm').value  = p.height_cm ?? '';
+    document.getElementById('weight_kg').value  = p.weight_kg ?? '';
+    document.getElementById('age_years').value  = p.age_years ?? '';
+  }
 
-    // ✅ Logout
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "login.html";
-    });
-  </script>
+  document.getElementById('saveProfile').onclick = async () => {
+    profileMsg.textContent = "กำลังบันทึก...";
+    const payload = {
+      id: user.id,
+      display_name: (document.getElementById('display_name').value || null),
+      height_cm: toNum(document.getElementById('height_cm').value),
+      weight_kg: toNum(document.getElementById('weight_kg').value),
+      age_years: toInt(document.getElementById('age_years').value),
+    };
+    const { error } = await supabase.from('profiles').upsert(payload);
+    if (error) profileMsg.textContent = "บันทึกไม่สำเร็จ: " + error.message;
+    else { profileMsg.textContent = "บันทึกแล้ว ✓"; }
+  };
+
+  // ===== Sleep sessions CRUD =====
+  const tbody = document.getElementById('tbody');
+  const addMsg = document.getElementById('addMsg');
+
+  async function loadSessions() {
+    tbody.innerHTML = `<tr><td colspan="7" class="center muted">กำลังโหลด...</td></tr>`;
+
+    const from = (page-1)*pageSize;
+    const to   = from + pageSize - 1;
+
+    // เลือกเฉพาะของผู้ใช้ปัจจุบัน (ปรับตาม RLS ของคุณ)
+    const { data, error, count } = await supabase
+      .from('sleep_sessions')
+      .select('id,start_time,end_time,duration_minutes,sleep_quality,note', { count: 'exact' })
+      .eq('user_id', user.id)
+      .order('start_time', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      tbody.innerHTML = `<tr><td colspan="7" class="danger">โหลดรายการไม่สำเร็จ: ${error.message}</td></tr>`;
+      return;
+    }
+
+    total = count || 0;
+    document.getElementById('pageInfo').textContent = `หน้า ${page} / ${Math.max(1, Math.ceil(total/pageSize))}`;
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="center muted">ยังไม่มีข้อมูล</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = '';
+    for (const r of data) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.id}</td>
+        <td><input type="datetime-local" value="${toLocalInput(r.start_time)}" data-k="start_time"></td>
+        <td><input type="datetime-local" value="${toLocalInput(r.end_time)}" data-k="end_time"></td>
+        <td class="muted">${r.duration_minutes ?? ''}</td>
+        <td><input type="number" min="1" max="100" value="${r.sleep_quality ?? ''}" data-k="sleep_quality" style="width:90px"></td>
+        <td><input value="${r.note??''}" data-k="note" style="min-width:220px"></td>
+        <td>
+          <button class="btn-green" data-act="save" data-id="${r.id}">บันทึก</button>
+          <button class="btn-red" data-act="del" data-id="${r.id}">ลบ</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  // เพิ่มรายการ
+  document.getElementById('addSession').onclick = async () => {
+    addMsg.textContent = "กำลังเพิ่ม...";
+    const payload = {
+      user_id: user.id,
+      start_time: fromLocalInput(document.getElementById('start_time').value),
+      end_time: fromLocalInput(document.getElementById('end_time').value),
+      sleep_quality: toInt(document.getElementById('sleep_quality').value),
+      note: emptyNull(document.getElementById('note').value),
+      source: 'admin',
+    };
+    // ตรวจสอบเวลา
+    if (!payload.start_time || !payload.end_time) {
+      addMsg.textContent = "กรุณาใส่เวลาเริ่ม/จบ"; return;
+    }
+    const { error } = await supabase.from('sleep_sessions').insert(payload);
+    if (error) addMsg.textContent = "เพิ่มไม่สำเร็จ: " + error.message;
+    else { addMsg.textContent = "เพิ่มแล้ว ✓"; clearAddInputs(); await loadSessions(); }
+  };
+
+  // แก้ไข/ลบ (event delegation)
+  tbody.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const id = +btn.dataset.id;
+    if (btn.dataset.act === 'save') {
+      const tr = btn.closest('tr');
+      const vals = readRow(tr);
+      const payload = {
+        start_time: fromLocalInput(vals.start_time),
+        end_time: fromLocalInput(vals.end_time),
+        sleep_quality: toInt(vals.sleep_quality),
+        note: emptyNull(vals.note)
+      };
+      const { error } = await supabase.from('sleep_sessions').update(payload).eq('id', id).eq('user_id', user.id);
+      if (error) alert("อัปเดตไม่สำเร็จ: " + error.message);
+      else { alert("บันทึกแล้ว"); await loadSessions(); }
+    }
+    if (btn.dataset.act === 'del') {
+      if (!confirm('ลบรายการนี้?')) return;
+      const { error } = await supabase.from('sleep_sessions').delete().eq('id', id).eq('user_id', user.id);
+      if (error) alert("ลบไม่สำเร็จ: " + error.message);
+      else { await loadSessions(); }
+    }
+  });
+
+  // หน้า
+  document.getElementById('prev').onclick = () => { if (page>1){ page--; loadSessions(); } };
+  document.getElementById('next').onclick = () => {
+    const last = Math.max(1, Math.ceil(total/pageSize));
+    if (page<last){ page++; loadSessions(); }
+  };
+  document.getElementById('refresh').onclick = loadSessions;
+
+  // ===== Helpers =====
+  function readRow(tr){
+    const obj = {};
+    tr.querySelectorAll('input').forEach(i => obj[i.dataset.k] = i.value);
+    return obj;
+    }
+  function toLocalInput(iso){
+    // iso → "YYYY-MM-DDThh:mm"
+    const d = new Date(iso);
+    const pad = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  function fromLocalInput(localStr){
+    // "YYYY-MM-DDThh:mm" (local) → ISO string
+    if(!localStr) return null;
+    const d = new Date(localStr);
+    return d.toISOString();
+  }
+  function toInt(v){ const n = parseInt(v,10); return Number.isFinite(n) ? n : null; }
+  function toNum(v){ const n = parseFloat(v); return Number.isFinite(n) ? n : null; }
+  function emptyNull(v){ return v && v.trim() ? v.trim() : null; }
+  function clearAddInputs(){
+    ['start_time','end_time','sleep_quality','note'].forEach(id=>document.getElementById(id).value='');
+  }
+
+  // start
+  requireLogin();
+</script>
 </body>
 </html>
