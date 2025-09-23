@@ -135,3 +135,42 @@ function renderAgeHistogram(rows) {
 
 let chart2;
 function renderGenChart(genData) { }
+
+let timeDistChart;
+function renderTimeDistributionChart(rows) {
+  const ctx = document.getElementById('timeDistChart');
+  if (!ctx) return;
+  if (timeDistChart) timeDistChart.destroy();
+
+  // นับจำนวน session ที่เริ่มนอนในแต่ละชั่วโมง (0-23)
+  const bins = Array(24).fill(0);
+  rows.forEach(r => {
+    if (!r.start_time) return;
+    const d = new Date(r.start_time);
+    const hour = d.getHours();
+    bins[hour]++;
+  });
+
+  timeDistChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+      datasets: [{
+        label: 'จำนวนครั้งที่เริ่มนอน',
+        data: bins,
+        backgroundColor: '#818cf8'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { title: { display: true, text: 'เวลาเริ่มนอน (ชั่วโมง)' } },
+        y: { title: { display: true, text: 'จำนวนครั้ง' }, beginAtZero: true }
+      }
+    }
+  });
+}

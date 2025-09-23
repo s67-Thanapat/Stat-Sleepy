@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>อายุ × ชั่วโมงนอน (Histogram)</title>
+    <link rel="stylesheet" href="../css/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <header class="container">
+        <h1>อายุ × ชั่วโมงนอน (Histogram)</h1>
+        <nav><a href="../main.html">← กลับหน้าแรก</a></nav>
+    </header>
+    <main class="container">
+        <section class="chart" style="height:260px;">
+            <canvas id="ageHistChart"></canvas>
+            <p class="muted" style="margin-top:8px;">ค่าเฉลี่ยชั่วโมงการนอนต่อคืน แยกตามอายุ</p>
+        </section>
+    </main>
+    <script src="../js/config.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/chart.js"></script>
+    <script>
+        (async function () {
+            const rows = await fetchAllSessions?.(500) || [];
+            renderAgeHistogram(rows);
+        })();
+    </script>
+</body>
+
+</html>

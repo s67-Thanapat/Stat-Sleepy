@@ -84,6 +84,7 @@
     renderChart(filtered);
     updateGenChart(filtered);
     renderAgeHistogram(filtered);
+    renderTimeDistributionChart(filtered);
   }
 
   async function init() {

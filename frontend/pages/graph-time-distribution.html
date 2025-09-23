@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>กระจายช่วงเวลานอน</title>
+    <link rel="stylesheet" href="../css/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <header class="container">
+        <h1>กระจายช่วงเวลานอน</h1>
+        <nav><a href="../main.html">← กลับหน้าแรก</a></nav>
+    </header>
+    <main class="container">
+        <section class="chart" style="height:320px;">
+            <canvas id="timeDistChart"></canvas>
+            <p class="muted" style="margin-top:8px;">จำนวนครั้งที่เริ่มนอนในแต่ละชั่วโมง</p>
+        </section>
+    </main>
+    <script src="../js/config.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/chart.js"></script>
+    <script>
+        (async function () {
+            const rows = await fetchAllSessions?.(500) || [];
+            renderTimeDistributionChart(rows);
+        })();
+    </script>
+</body>
+
+</html>
