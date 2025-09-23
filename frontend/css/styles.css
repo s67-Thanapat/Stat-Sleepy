@@ -4,6 +4,7 @@ body { margin: 0; background:#f7f7fb; color:#0f172a; }
 header { display:flex; align-items:center; justify-content:space-between; }
 header h1 { margin:0; font-size:22px; }
 nav a { text-decoration:none; color:#0f172a; padding:6px 10px; border:1px solid #0f172a; border-radius:8px; }
+nav a:hover { background:#0f172a; color:#fff; }
 button {cursor: pointer;}
 
 .controls { display:flex; gap:8px; margin:16px 0; }
