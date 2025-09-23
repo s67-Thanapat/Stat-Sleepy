@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>เข้าสู่ระบบแอดมิน</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f8f9fb;
+      color: #111827;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .card {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,.1);
+      width: 320px;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 12px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { background: #1e40af; }
+    #msg { margin-top: 12px; font-size: 0.9rem; color: red; }
+    a { font-size: 0.9rem; color: #2563eb; cursor: pointer; }
+  </style>
+
+  <!-- ✅ Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="card">
+    <h2>เข้าสู่ระบบแอดมิน</h2>
+    <form id="loginForm">
+      <input id="email" type="email" placeholder="อีเมล" required />
+      <input id="password" type="password" placeholder="รหัสผ่าน" required />
+      <button type="submit">Login</button>
+      <div id="msg"></div>
+    </form>
+    <p style="margin-top:10px;">
+      <a id="forgot">ลืมรหัสผ่าน?</a>
+    </p>
+  </div>
+
+  <script>
+    // ✅ ใส่ค่าโปรเจกต์ของคุณจาก Supabase
+    const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const msg = document.getElementById("msg");
+    const form = document.getElementById("loginForm");
+    const emailEl = document.getElementById("email");
+    const passEl = document.getElementById("password");
+
+    // ✅ จัดการ login
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.style.color = "black";
+      msg.textContent = "กำลังเข้าสู่ระบบ...";
+
+      const email = emailEl.value.trim();
+      const password = passEl.value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        msg.style.color = "red";
+        msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${error.message}`;
+        console.warn("Login error:", error);
+        return;
+      }
+      // ✅ สำเร็จ → ไปหน้า admin.html หรือ next
+      const next = new URLSearchParams(location.search).get("next") || "admin.html";
+      location.href = next;
+    });
+
+    // ✅ ลืมรหัสผ่าน
+    document.getElementById("forgot").addEventListener("click", async (e) => {
+      e.preventDefault();
+      const email = emailEl.value.trim();
+      if (!email) { msg.style.color = "red"; msg.textContent = "กรอกอีเมลก่อน"; return; }
+
+      const redirectTo = `${location.origin}/reset.html`; // ต้องสร้าง reset.html
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+
+      if (error) {
+        msg.style.color = "red";
+        msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`;
+      } else {
+        msg.style.color = "green";
+        msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว";
+      }
+    });
+  </script>
+</body>
+</html>
