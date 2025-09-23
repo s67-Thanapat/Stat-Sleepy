@@ -1,36 +1,137 @@
 let chart;
-function renderChart(labels, hours) {
+function renderChart(rows) {
   const ctx = document.getElementById('sleepChart');
   if (chart) chart.destroy();
+
+  // เตรียมข้อมูล scatter
+  const dataPoints = rows
+    .filter(r => r.sleep_quality != null && r.duration_minutes != null)
+    .map(r => ({
+      x: Number(r.sleep_quality),
+      y: Number(r.duration_minutes) / 60
+    }));
+
+  // คำนวณ linear regression (y = a + bx)
+  function linearRegression(data) {
+    const n = data.length;
+    if (n < 2) return null;
+    const sumX = data.reduce((s, p) => s + p.x, 0);
+    const sumY = data.reduce((s, p) => s + p.y, 0);
+    const sumXY = data.reduce((s, p) => s + p.x * p.y, 0);
+    const sumXX = data.reduce((s, p) => s + p.x * p.x, 0);
+    const meanX = sumX / n;
+    const meanY = sumY / n;
+    const b = (sumXY - n * meanX * meanY) / (sumXX - n * meanX * meanX);
+    const a = meanY - b * meanX;
+    return { a, b };
+  }
+
+  const lr = linearRegression(dataPoints);
+
+  // สร้างจุดสำหรับเส้น regression
+  let regressionLine = [];
+  if (lr && dataPoints.length > 1) {
+    const minX = Math.min(...dataPoints.map(p => p.x));
+    const maxX = Math.max(...dataPoints.map(p => p.x));
+    regressionLine = [
+      { x: minX, y: lr.a + lr.b * minX },
+      { x: maxX, y: lr.a + lr.b * maxX }
+    ];
+  }
+
   chart = new Chart(ctx, {
-    type: 'line',
-    data: { labels, datasets: [{ label: 'ชั่วโมงการนอน', data: hours, tension: 0.3 }] },
-    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'แต่ละรายการ',
+          data: dataPoints,
+          backgroundColor: '#60a5fa'
+        },
+        ...(regressionLine.length
+          ? [{
+            label: 'Linear Regression',
+            type: 'line',
+            data: regressionLine,
+            borderColor: '#f43f5e',
+            borderWidth: 2,
+            fill: false,
+            pointRadius: 0,
+            tension: 0
+          }]
+          : [])
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'คุณภาพการนอน (0-100)' },
+          min: 0,
+          max: 100
+        },
+        y: {
+          title: { display: true, text: 'ชั่วโมงที่นอน' },
+          beginAtZero: true
+        }
+      }
+    }
   });
 }
 
-let genChart;
-function renderGenChart(genData) {
-  const ctx = document.getElementById('genChart');
-  if (genChart) genChart.destroy();
+let ageHistChart;
+function renderAgeHistogram(rows) {
+  const ctx = document.getElementById('ageHistChart');
+  if (!ctx) return;
+  if (ageHistChart) ageHistChart.destroy();
 
-  const labels = Object.keys(genData);
-  const data = labels.map(gen => genData[gen].avgHours);
+  // สร้าง bin อายุ (ช่วงละ 5 ปี)
+  const bins = {};
+  rows.forEach(r => {
+    if (r.age_years == null || isNaN(r.age_years)) return;
+    const age = Math.floor(Number(r.age_years));
+    const bin = `${Math.floor(age / 5) * 5}-${Math.floor(age / 5) * 5 + 4}`;
+    if (!bins[bin]) bins[bin] = [];
+    bins[bin].push((r.duration_minutes || 0) / 60);
+  });
 
-  genChart = new Chart(ctx, {
+  const labels = Object.keys(bins).sort((a, b) => {
+    const aStart = parseInt(a.split('-')[0]);
+    const bStart = parseInt(b.split('-')[0]);
+    return aStart - bStart;
+  });
+  const data = labels.map(bin => {
+    const arr = bins[bin];
+    return arr.length ? (arr.reduce((s, v) => s + v, 0) / arr.length) : 0;
+  });
+
+  ageHistChart = new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
       datasets: [{
-        label: 'ชั่วโมงการนอนเฉลี่ย',
+        label: 'ชั่วโมงที่นอน (เฉลี่ย)',
         data,
-        backgroundColor: ['#60a5fa', '#fbbf24', '#34d399', '#f472b6'],
+        backgroundColor: '#38bdf8'
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true } }
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { title: { display: true, text: 'อายุ (ปี)' } },
+        y: { title: { display: true, text: 'ชั่วโมงที่นอน' }, beginAtZero: true }
+      }
     }
   });
 }
+
+let chart2;
+function renderGenChart(genData) { }

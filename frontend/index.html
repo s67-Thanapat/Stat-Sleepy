@@ -17,10 +17,13 @@
 
   <main class="container">
     <section class="controls">
-      <button data-range="7d">7 วัน</button>
-      <button data-range="30d" class="active">30 วัน</button>
-      <button data-range="90d">90 วัน</button>
-      <button data-range="all">ทั้งหมด</button>
+      <button data-gen="all" class="active">ทั้งหมด</button>
+      <button data-gen="Gen Z">Gen Z</button>
+      <button data-gen="Gen Y">Gen Y</button>
+      <button data-gen="Gen X">Gen X</button>
+      <button data-gen="Baby Boomer">Baby Boomer</button>
+      <button data-gen="Gen Alpha">Gen Alpha</button>
+      <button data-gen="ไม่ระบุ">ไม่ระบุ</button>
     </section>
 
     <section class="cards">
@@ -41,7 +44,7 @@
       </p>
     </section>
     <section class="chart" style="margin-top:24px;">
-      <canvas id="genChart" height="150"></canvas>
+      <canvas id="ageHistChart" height="150"></canvas>
       <p id="emptyMsg" class="muted" style="display:none;">
         ยังไม่มีข้อมูล — ไปที่ <a href="./upload.html">อัปโหลด/นำเข้าข้อมูล</a>
       </p>

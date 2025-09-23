@@ -6,18 +6,8 @@
   const avgQualityEl = document.getElementById('avgQuality');
   const emptyMsg = document.getElementById('emptyMsg');
 
-  let range = '30d';
+  let gen = 'all';
   let rows = [];
-
-  function filterByRange(items) {
-    if (range === 'all') return items;
-    const start = new Date();
-    if (range === '7d') start.setDate(start.getDate() - 7);
-    if (range === '30d') start.setDate(start.getDate() - 30);
-    if (range === '90d') start.setDate(start.getDate() - 90);
-    return items.filter(r => new Date(r.start_time) >= start);
-  }
-
 
   function getGen(age) {
     if (age == null) return 'ไม่ระบุ';
@@ -29,20 +19,24 @@
     return 'อื่นๆ';
   }
 
+  function filterByGen(items) {
+    if (gen === 'all') return items;
+    return items.filter(r => getGen(r.age_years) === gen);
+  }
+
   function updateGenChart(filtered) {
-    // จัดกลุ่มตาม Gen
+    // ...เหมือนเดิม...
     const genMap = {};
     filtered.forEach(r => {
-      const gen = getGen(r.age_years);
-      if (!genMap[gen]) genMap[gen] = [];
-      genMap[gen].push((r.duration_minutes || 0) / 60);
+      const g = getGen(r.age_years);
+      if (!genMap[g]) genMap[g] = [];
+      genMap[g].push((r.duration_minutes || 0) / 60);
     });
 
-    // คำนวณค่าเฉลี่ยแต่ละ Gen
     const genData = {};
-    Object.keys(genMap).forEach(gen => {
-      const arr = genMap[gen];
-      genData[gen] = {
+    Object.keys(genMap).forEach(g => {
+      const arr = genMap[g];
+      genData[g] = {
         avgHours: arr.length ? (arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(2) : 0
       };
     });
@@ -51,13 +45,14 @@
   }
 
   function updateUI() {
-    const filtered = filterByRange(rows);
+    const filtered = filterByGen(rows);
     if (!filtered.length) {
       emptyMsg.style.display = '';
       avgHoursEl.textContent = '-';
       avgQualityEl.textContent = '-';
       renderChart([], []);
       renderGenChart({});
+      renderAgeHistogram([]);
       return;
     }
     emptyMsg.style.display = 'none';
@@ -70,7 +65,6 @@
       if (!dailyMap[key]) dailyMap[key] = [];
       dailyMap[key].push((r.duration_minutes || 0) / 60);
     });
-
 
     const labels = Object.keys(dailyMap).sort().map(d => {
       return fmt.format(new Date(d));
@@ -87,8 +81,9 @@
     avgHoursEl.textContent = (avgDur / 60).toFixed(2);
     avgQualityEl.textContent = avgQ;
 
-    renderChart(labels, hours);
+    renderChart(filtered);
     updateGenChart(filtered);
+    renderAgeHistogram(filtered);
   }
 
   async function init() {
@@ -101,7 +96,7 @@
     b.addEventListener('click', () => {
       btns.forEach(x => x.classList.remove('active'));
       b.classList.add('active');
-      range = b.getAttribute('data-range');
+      gen = b.getAttribute('data-gen');
       updateUI();
     });
   });
