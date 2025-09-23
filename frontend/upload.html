@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>อัปโหลด/นำเข้าข้อมูล</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+
+<body>
+  <header class="container">
+    <h1>นำเข้าข้อมูลการนอน</h1>
+    <nav style="display:flex;gap:12px;align-items:center;">
+      <a href="./index.html">← กลับหน้าหลัก</a>
+
+      <!-- ⭐ เพิ่มใหม่: แสดงสถานะผู้ใช้ + ปุ่ม Login/Logout -->
+      <span id="authUser" class="muted" style="margin-left:auto;"></span>
+      <button id="btnLogin" class="btn">Login</button>
+      <button id="btnLogout" class="btn" style="display:none;">Logout</button>
+    </nav>
+  </header>
+  >>>>>>> origin/main
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>อัปโหลด/นำเข้าข้อมูล</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+
+  <body>
+    <header class="container">
+      <h1>นำเข้าข้อมูลการนอน</h1>
+      <nav><a href="./index.html">← กลับหน้าหลัก</a></nav>
+    </header>
+
+    <main class="container">
+      <!-- อัปโหลดไฟล์ CSV -->
+      <section class="panel">
+        <h2>อัปโหลด CSV</h2>
+        <input type="file" id="fileInput" accept=".csv" />
+        <button id="btnUpload">อัปโหลด</button>
+        <p class="muted">รองรับ: <code>start_time,end_time,sleep_quality,note</code> หรือ
+          <code>date,sleep_start,sleep_end,quality</code>
+        </p>
+      </section>
+
+      <!-- ดึงจาก URL CSV -->
+      <section class="panel">
+        <h2>ดึงจาก URL CSV</h2>
+        <input type="url" id="urlInput" placeholder="https://example.com/sleep.csv" />
+        <button id="btnFetch">ดึงและนำเข้า</button>
+        <p class="muted">เช่น Raw GitHub / Google Sheets export CSV / Dropbox (?dl=1)</p>
+      </section>
+      <!-- ฟอร์มบันทึก 1 รายการ -->
+      <section class="panel">
+        <h2>บันทึกด้วยฟอร์ม (เพิ่ม 1 รายการ)</h2>
+
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+          <label>วันที่
+            <input type="date" id="fDate" required />
+          </label>
+          <label>เวลาเริ่มนอน
+            <input type="time" id="fStart" required />
+          </label>
+          <label>เวลาตื่น
+            <input type="time" id="fEnd" required />
+          </label>
+          <label>คุณภาพการนอน (0–100)
+            <input type="number" id="fQuality" min="0" max="100" step="1" placeholder="เช่น 80" />
+          </label>
+
+          <!-- ฟิลด์ใหม่ (ยังไม่บันทึกลง DB ถ้าตารางยังไม่มีคอลัมน์) -->
+          <label>ส่วนสูง (ซม.)
+            <input type="number" id="fHeight" min="50" max="250" step="0.1" placeholder="เช่น 170.5" />
+          </label>
+          <label>น้ำหนัก (กก.)
+            <input type="number" id="fWeight" min="20" max="300" step="0.1" placeholder="เช่น 60.0" />
+          </label>
+          <label>อายุ (ปี)
+            <input type="number" id="fAge" min="1" max="120" step="1" placeholder="เช่น 21" />
+          </label>
+        </div>
+
+        <label style="display:block;margin-top:12px;">บันทึกเพิ่มเติม
+          <input type="text" id="fNote" placeholder="เช่น ฝันดี / นอนดึก" />
+        </label>
+
+        <button id="btnSave" style="margin-top:12px;">บันทึกลงฐานข้อมูล</button>
+        <p id="formMsg" class="muted" style="margin-top:8px;"></p>
+      </section>
+    </main>
+
+    <!-- libs -->
+    <!-- ถ้ายังไม่มี @supabase/supabase-js ให้เอาคอมเมนต์บรรทัดนี้ออก -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> -->
+    <script src="./js/config.js"></script>
+    <script src="./js/api.js"></script>
+    <!-- ⭐ เพิ่มใหม่: ตัวช่วย Auth (ปุ่ม Login/Logout + requireAuth) -->
+    <script src="./js/auth.js"></script>
+    >>>>>>> origin/main
+
+    </main>
+
+    <!-- libs -->
+    <script src="./js/config.js"></script>
+    <script src="./js/api.js"></script>
+
+    <!-- logic สำหรับปุ่มเดิม (อัปโหลด/URL) -->
+    <script>
+      const fileInput = document.getElementById('fileInput');
+      const btnUpload = document.getElementById('btnUpload');
+      const urlInput = document.getElementById('urlInput');
+      const btnFetch = document.getElementById('btnFetch');
+
+      btnUpload.addEventListener('click', async () => {
+        const f = fileInput.files?.[0];
+        if (!f) return alert('เลือกไฟล์ก่อน');
+        const text = await f.text();
+        try {
+          const r = await ingestCsvText(text);
+          alert(`นำเข้าแล้ว: ${r.inserted} แถว`);
+        } catch (e) { alert('Error: ' + (e?.message || e)); }
+      });
+
+      btnFetch.addEventListener('click', async () => {
+        const url = urlInput.value.trim();
+        if (!url) return alert('ใส่ URL ก่อน');
+        try {
+          const r = await ingestFromUrl(url);
+          alert(`นำเข้าแล้ว: ${r.inserted} แถว`);
+        } catch (e) { alert('Error: ' + (e?.message || e)); }
+      });
+    </script>
+
+    <!-- ✅ ใหม่: logic ฟอร์มบันทึก 1 รายการ -->
+    <script>
+      const btnSave = document.getElementById('btnSave');
+      const formMsg = document.getElementById('formMsg');
+
+      btnSave.addEventListener('click', async () => {
+        const d = document.getElementById('fDate').value;      // YYYY-MM-DD
+        const st = document.getElementById('fStart').value;     // HH:mm
+        const et = document.getElementById('fEnd').value;       // HH:mm
+        const qv = document.getElementById('fQuality').value;
+        const age = document.getElementById('fAge').value
+        const note = document.getElementById('fNote').value.trim();
+
+        if (!d || !st || !et) {
+          formMsg.textContent = 'กรอก วันที่ / เวลาเริ่ม / เวลาตื่น ให้ครบก่อนนะ';
+          return;
+        }
+
+        const startLocal = new Date(`${d}T${st}:00`);
+        let endLocal = new Date(`${d}T${et}:00`);
+        if (endLocal <= startLocal) endLocal.setDate(endLocal.getDate() + 1);
+
+        try {
+          const rows = await createSession({
+            start_time: startLocal.toISOString(),
+            end_time: endLocal.toISOString(),
+            sleep_quality: qv !== '' ? Number(qv) : null,
+            note: note || null,
+            age_years: age !== '' ? Number(age) : null
+          });
+          formMsg.textContent = `บันทึกสำเร็จ (id: ${rows[0]?.id ?? '-'})`;
+        } catch (e) {
+          formMsg.textContent = 'บันทึกไม่สำเร็จ: ' + (e?.message || e);
+        }
+      });
+    </script>
+  </body>
+
+</html>
