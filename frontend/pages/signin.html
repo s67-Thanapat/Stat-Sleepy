@@ -1,68 +1,169 @@
-<script>
-  // ---------- CONFIG ----------
-  const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in</title>
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-  });
+  <style>
+    :root{
+      --bg1:#0b5bd3;--bg2:#23a6ff;
+      --text:#0f172a;--muted:#6b7280;
+      --border:#e5e7eb;--primary:#2563eb;--primary-2:#1e40af;
+      --card:#ffffff;
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{
+      margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);
+      background:radial-gradient(1200px 600px at 15% -10%,#ffffff66,transparent),
+                 linear-gradient(120deg,var(--bg1),var(--bg2));
+      display:grid;place-items:center;padding:24px
+    }
+    .card{
+      width:min(92vw,380px);background:var(--card);
+      border:1px solid #e6e9f3;border-radius:16px;
+      box-shadow:0 20px 60px rgba(0,0,0,.15);
+      padding:24px 24px 18px
+    }
+    h1{margin:0 0 4px;font-weight:800;letter-spacing:.3px;text-align:center}
+    .sub{color:var(--muted);margin:0 0 18px;font-size:.95rem;text-align:center}
+    .field{margin:10px 0 12px}
+    .label{display:block;font-size:.9rem;color:var(--muted);margin:0 0 6px}
+    .input-wrap{position:relative;border:1px solid var(--border);border-radius:10px;background:#fff;display:flex;align-items:center}
+    input{width:100%;border:0;outline:none;background:transparent;padding:12px 14px;font:inherit;color:inherit}
+    .show-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.9rem;color:var(--primary);cursor:pointer;user-select:none}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 10px;font-size:.9rem}
+    .row a{color:var(--primary);text-decoration:none}.row a:hover{text-decoration:underline}
+    .checkbox{display:flex;align-items:center;gap:8px;user-select:none}
+    .checkbox input{accent-color:var(--primary)}
+    button{width:100%;border:0;outline:0;cursor:pointer;background:var(--primary);color:#fff;font-weight:700;border-radius:12px;padding:12px 14px;margin-top:6px;box-shadow:0 6px 18px rgba(37,99,235,.35)}
+    button:hover{background:var(--primary-2)}
+    #msg{margin-top:10px;font-size:.92rem}
+    .foot{margin-top:12px;text-align:center;color:var(--muted);font-size:.92rem}
+    .foot a{color:var(--primary);text-decoration:none}.foot a:hover{text-decoration:underline}
+  </style>
 
-  const ADMIN_EMAILS = ["ozone.gg55@gmail.com", "ozza.tv55@gmail.com"]; 
-  // 👆 ใส่อีเมลแอดมินที่อนุญาต
+  <!-- ใช้ UMD build (window.supabase) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+  <div class="card">
+    <h1>Sign in</h1>
+    <p class="sub">เข้าสู่ระบบเพื่อใช้งานแดชบอร์ดของคุณ</p>
 
-  const form = document.getElementById("loginForm");
-  const emailEl = document.getElementById("email");
-  const passEl  = document.getElementById("password");
-  const rememberEl = document.getElementById("remember");
-  const msg = document.getElementById("msg");
+    <form id="loginForm">
+      <div class="field">
+        <label class="label" for="email">อีเมล</label>
+        <div class="input-wrap">
+          <input id="email" type="email" placeholder="name@example.com" autocomplete="email" required />
+        </div>
+      </div>
 
-  function resolveNext(next, fallback){
-    const v = next || fallback || "/index.html";
-    if (/^https?:\/\//i.test(v)) return v;
-    return `${location.origin}${v.startsWith("/") ? v : `/${v}`}`;
-  }
+      <div class="field">
+        <label class="label" for="password">รหัสผ่าน</label>
+        <div class="input-wrap">
+          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+          <span id="toggle" class="show-toggle">SHOW</span>
+        </div>
+      </div>
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    msg.style.color = "#0f172a";
-    msg.textContent = "กำลังเข้าสู่ระบบ...";
+      <div class="row">
+        <label class="checkbox">
+          <input id="remember" type="checkbox" /> Remember me
+        </label>
+        <a id="forgot" href="#">Forgot Password?</a>
+      </div>
 
-    const email = emailEl.value.trim();
-    const password = passEl.value;
+      <button type="submit">Sign in</button>
+      <div id="msg" role="status" aria-live="polite"></div>
+    </form>
 
-    if(rememberEl.checked) localStorage.setItem("ss_email", email);
-    else localStorage.removeItem("ss_email");
+    <div class="foot">
+      ยังไม่มีบัญชี? <a href="./signup.html">Sign Up</a>
+    </div>
+  </div>
 
-    const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
-    if (signErr) { 
-      msg.style.color="crimson"; 
-      msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`; 
-      return; 
+  <script>
+    // ---------- CONFIG ----------
+    const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+
+    // ✅ อีเมลแอดมิน
+    const ADMIN_EMAILS = ["ozone.gg55@gmail.com", "ozza.tv55@gmail.com"];
+
+    const form = document.getElementById("loginForm");
+    const emailEl = document.getElementById("email");
+    const passEl  = document.getElementById("password");
+    const rememberEl = document.getElementById("remember");
+    const msg = document.getElementById("msg");
+
+    // toggle password
+    document.getElementById("toggle").addEventListener("click", () => {
+      const isPwd = passEl.type === "password";
+      passEl.type = isPwd ? "text" : "password";
+      document.getElementById("toggle").textContent = isPwd ? "HIDE" : "SHOW";
+      passEl.focus();
+    });
+
+    // remember email
+    (function initRemember(){
+      const saved = localStorage.getItem("ss_email");
+      if(saved){ emailEl.value = saved; rememberEl.checked = true; }
+    })();
+
+    function resolveNext(next, fallback){
+      const v = next || fallback || "/index.html";
+      if (/^https?:\/\//i.test(v)) return v;
+      return `${location.origin}${v.startsWith("/") ? v : `/${v}`}`;
     }
 
-    // ✅ ตรวจอีเมลว่าตรงกับ ADMIN_EMAILS หรือไม่
-    const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+    // login
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.style.color = "#0f172a";
+      msg.textContent = "กำลังเข้าสู่ระบบ...";
 
-    const nextParam = new URLSearchParams(location.search).get("next");
-    const fallback  = isAdmin ? "/admin.html" : "/index.html?login=1";
-    const finalUrl  = resolveNext(nextParam, fallback);
+      const email = emailEl.value.trim();
+      const password = passEl.value;
 
-    msg.style.color = "seagreen";
-    msg.textContent = isAdmin
-      ? "เข้าสู่ระบบสำเร็จ (Admin) กำลังไปหน้าแอดมิน..."
-      : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
+      if(rememberEl.checked) localStorage.setItem("ss_email", email);
+      else localStorage.removeItem("ss_email");
 
-    setTimeout(() => { window.location.href = finalUrl; }, 400);
-  });
+      const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (signErr) { 
+        msg.style.color="crimson"; 
+        msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`; 
+        return; 
+      }
 
-  // ลืมรหัสผ่าน
-  document.getElementById("forgot").addEventListener("click", async (e) => {
-    e.preventDefault();
-    const email = emailEl.value.trim();
-    if (!email) { msg.style.color = "crimson"; msg.textContent = "กรุณากรอกอีเมลก่อน"; return; }
-    const redirectTo = `${location.origin}/reset.html`;
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-    if (error) { msg.style.color="crimson"; msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`; }
-    else { msg.style.color="seagreen"; msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว"; }
-  });
-</script>
+      // ✅ ถ้าอีเมลเป็น admin → ไปหน้า admin.html เลย
+      const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+      const nextParam = new URLSearchParams(location.search).get("next");
+      const fallback  = isAdmin ? "/admin.html" : "/index.html?login=1";
+      const finalUrl  = resolveNext(nextParam, fallback);
+
+      msg.style.color = "seagreen";
+      msg.textContent = isAdmin
+        ? "เข้าสู่ระบบสำเร็จ (Admin) กำลังไปหน้าแอดมิน..."
+        : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
+
+      setTimeout(() => { window.location.href = finalUrl; }, 400);
+    });
+
+    // forgot password
+    document.getElementById("forgot").addEventListener("click", async (e) => {
+      e.preventDefault();
+      const email = emailEl.value.trim();
+      if (!email) { msg.style.color = "crimson"; msg.textContent = "กรุณากรอกอีเมลก่อน"; return; }
+      const redirectTo = `${location.origin}/reset.html`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) { msg.style.color="crimson"; msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`; }
+      else { msg.style.color="seagreen"; msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว"; }
+    });
+  </script>
+</body>
+</html>
