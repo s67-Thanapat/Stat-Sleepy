@@ -304,7 +304,6 @@
     }
   </style>
 
-  <!-- ใช้ UMD build (window.supabase) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 
@@ -364,6 +363,27 @@
     const rememberEl = document.getElementById("remember");
     const msg = document.getElementById("msg");
 
+    // ===== helpers =====
+    function toHref(path) {
+      const clean = (path || "").replace(/^\/+/, "");
+      if (location.protocol === "http:" || location.protocol === "https:") return `/${clean}`;
+      return clean;
+    }
+    function resolveNext(next, fallback) {
+      if (next && /^https?:\/\//i.test(next)) return next;
+      const v = (next && next.trim()) || fallback || "index.html";
+      return toHref(v);
+    }
+    // รอให้ session พร้อม (กันเด้งกลับเพราะ admin.html อ่าน session ไม่ทัน)
+    async function ensureSessionReady(maxTries = 10, delayMs = 150) {
+      for (let i = 0; i < maxTries; i++) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.access_token) return true;
+        await new Promise(r => setTimeout(r, delayMs));
+      }
+      return false;
+    }
+
     // toggle password
     document.getElementById("toggle").addEventListener("click", () => {
       const isPwd = passEl.type === "password";
@@ -374,30 +394,23 @@
 
     // remember email
     (function initRemember() {
-      (function initRemember() {
-        const saved = localStorage.getItem("ss_email");
-        if (saved) { emailEl.value = saved; rememberEl.checked = true; }
-        if (saved) { emailEl.value = saved; rememberEl.checked = true; }
-      })();
+      const saved = localStorage.getItem("ss_email");
+      if (saved) { emailEl.value = saved; rememberEl.checked = true; }
+    })();
 
-      function resolveNext(next, fallback) {
-        const v = next || fallback || "/index.html";
-        if (/^https?:\/\//i.test(v)) return v;
-        return `${location.origin}${v.startsWith("/") ? v : `/${v}`}`;
-      }
+    // login
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.style.color = "#0f172a";
+      msg.textContent = "กำลังเข้าสู่ระบบ...";
 
-      // login
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        msg.style.color = "#0f172a";
-        msg.textContent = "กำลังเข้าสู่ระบบ...";
+      const email = emailEl.value.trim();
+      const password = passEl.value;
 
-        const email = emailEl.value.trim();
-        const password = passEl.value;
+      if (rememberEl.checked) localStorage.setItem("ss_email", email);
+      else localStorage.removeItem("ss_email");
 
-        if (rememberEl.checked) localStorage.setItem("ss_email", email);
-        else localStorage.removeItem("ss_email");
-
+      try {
         const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signErr) {
           msg.style.color = "crimson";
@@ -405,30 +418,44 @@
           return;
         }
 
-        // ✅ ถ้าอีเมลเป็น admin → ไปหน้า admin.html เลย
+        // รอ session พร้อมก่อนค่อยเปลี่ยนหน้า
+        await ensureSessionReady();
+
         const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+        if (isAdmin) {
+          msg.style.color = "seagreen";
+          msg.textContent = "เข้าสู่ระบบสำเร็จ (Admin) กำลังไปหน้าแอดมิน...";
+          setTimeout(() => {
+            window.location.replace(toHref("admin.html"));
+          }, 200);
+          return;
+        }
+
         const nextParam = new URLSearchParams(location.search).get("next");
-        const fallback = isAdmin ? "/admin.html" : "/index.html?login=1";
-        const finalUrl = resolveNext(nextParam, fallback);
+        const finalUrl = resolveNext(nextParam, "index.html?login=1");
+
         msg.style.color = "seagreen";
-        msg.textContent = isAdmin
-          ? "เข้าสู่ระบบสำเร็จ (Admin) กำลังไปหน้าแอดมิน..."
-          : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
+        msg.textContent = "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
+        setTimeout(() => { window.location.assign(finalUrl); }, 200);
 
-        setTimeout(() => { window.location.href = finalUrl; }, 400);
-      });
+      } catch (err) {
+        msg.style.color = "crimson";
+        msg.textContent = `เกิดข้อผิดพลาดไม่คาดคิด: ${err?.message || err}`;
+        console.error(err);
+      }
+    });
 
-      // forgot password
-      document.getElementById("forgot").addEventListener("click", async (e) => {
-        e.preventDefault();
-        const email = emailEl.value.trim();
-        if (!email) { msg.style.color = "crimson"; msg.textContent = "กรุณากรอกอีเมลก่อน"; return; }
-        const redirectTo = `${location.origin}/reset.html`;
-        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-        if (error) { msg.style.color = "crimson"; msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`; }
-        else { msg.style.color = "seagreen"; msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว"; }
-      });
-    })();
+    // forgot password
+    document.getElementById("forgot").addEventListener("click", async (e) => {
+      e.preventDefault();
+      const email = emailEl.value.trim();
+      if (!email) { msg.style.color = "crimson"; msg.textContent = "กรุณากรอกอีเมลก่อน"; return; }
+      const redirectTo = `${location.origin}/reset.html`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) { msg.style.color = "crimson"; msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`; }
+      else { msg.style.color = "seagreen"; msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว"; }
+    });
+    }) ();
   </script>
 </body>
 
