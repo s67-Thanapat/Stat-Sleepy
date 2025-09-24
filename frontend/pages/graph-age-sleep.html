@@ -4,29 +4,76 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>อายุ × ชั่วโมงนอน (Histogram)</title>
+    <title>ชั่วโมงนอนเฉลี่ยแยกตามอาชีพ (Histogram)</title>
     <link rel="stylesheet" href="../css/styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
     <header class="container">
-        <h1>อายุ × ชั่วโมงนอน (Histogram)</h1>
+        <h1>ชั่วโมงนอนเฉลี่ยแยกตามอาชีพ (Histogram)</h1>
         <nav><a href="../index.html">← กลับหน้าแรก</a></nav>
     </header>
     <main class="container">
-        <section class="chart" style="height:260px;">
-            <canvas id="ageHistChart"></canvas>
-            <p class="muted" style="margin-top:8px;">ค่าเฉลี่ยชั่วโมงการนอนต่อคืน แยกตามอายุ</p>
+        <section class="chart" style="height:320px;">
+            <canvas id="occupationHistChart"></canvas>
+            <p class="muted" style="margin-top:8px;">ค่าเฉลี่ยชั่วโมงการนอนต่อคืน แยกตามอาชีพ</p>
         </section>
     </main>
     <script src="../js/config.js"></script>
     <script src="../js/api.js"></script>
-    <script src="../js/chart.js"></script>
     <script>
+        async function renderOccupationHistogram(rows) {
+            const ctx = document.getElementById('occupationHistChart');
+            if (!ctx) return;
+
+            // รวมข้อมูลตามอาชีพ
+            const occMap = {};
+            rows.forEach(r => {
+                const occ = r.occupation || r["Occupation"] || "ไม่ระบุ";
+                const dur = r.duration ?? r["Sleep Duration"];
+                if (dur == null || isNaN(dur)) return;
+                if (!occMap[occ]) occMap[occ] = [];
+                occMap[occ].push(Number(dur));
+            });
+
+            // เอาเฉพาะอาชีพที่มีข้อมูลมากกว่า 2 คน
+            const labels = Object.keys(occMap).filter(k => occMap[k].length > 2);
+            const data = labels.map(k => {
+                const arr = occMap[k];
+                return arr.length ? (arr.reduce((s, v) => s + v, 0) / arr.length) : 0;
+            });
+
+            // สร้างกราฟ
+            if (window.occupationHistChartObj) window.occupationHistChartObj.destroy();
+            window.occupationHistChartObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'ชั่วโมงนอนเฉลี่ย',
+                        data,
+                        backgroundColor: '#fbbf24'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: false }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'อาชีพ' } },
+                        y: { title: { display: true, text: 'ชั่วโมงนอน' }, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
         (async function () {
-            const rows = await fetchAllSessions?.(500) || [];
-            renderAgeHistogram(rows);
+            const rows = await fetchAllSessions?.(1000) || [];
+            renderOccupationHistogram(rows);
         })();
     </script>
 </body>

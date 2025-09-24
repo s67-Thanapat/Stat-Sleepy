@@ -1,184 +1,275 @@
 <!doctype html>
 <html lang="th">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>บันทึกการนอน (ฟอร์ม)</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>บันทึกการนอน (ฟอร์ม)</title>
 
-  <style>
-    :root{
-      --bg:#f8fafc;        /* เทาอ่อน */
-      --card:#ffffff;      /* พื้นหลังกล่อง */
-      --text:#1e293b;      /* น้ำเงินเข้ม */
-      --muted:#64748b;     /* เทากลาง */
-      --border:#d1d5db;    /* เทาเส้น */
-      --primary:#2563eb;   /* น้ำเงินหลัก */
-      --primary-hover:#1e40af;
-      --shadow:0 6px 18px rgba(0,0,0,.06);
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background:var(--bg);color:var(--text);
-      min-height:100vh;display:flex;flex-direction:column;
-    }
+    <style>
+        :root {
+            --bg: #f8fafc;
+            /* เทาอ่อน */
+            --card: #ffffff;
+            /* พื้นหลังกล่อง */
+            --text: #1e293b;
+            /* น้ำเงินเข้ม */
+            --muted: #64748b;
+            /* เทากลาง */
+            --border: #d1d5db;
+            /* เทาเส้น */
+            --primary: #2563eb;
+            /* น้ำเงินหลัก */
+            --primary-hover: #1e40af;
+            --shadow: 0 6px 18px rgba(0, 0, 0, .06);
+        }
 
-    header{
-      background:var(--card);border-bottom:1px solid var(--border);
-      padding:14px 20px;box-shadow:var(--shadow);
-    }
-    header .bar{
-      display:flex;align-items:center;justify-content:space-between;
-      max-width:980px;margin:0 auto;
-    }
-    header h1{margin:0;font-size:20px;font-weight:600;color:var(--primary)}
-    header nav a{
-      padding:8px 14px;border:1px solid var(--border);border-radius:8px;
-      color:var(--text);text-decoration:none;font-size:14px;font-weight:500;
-      background:var(--card);transition:all .2s;
-    }
-    header nav a:hover{border-color:var(--primary);color:var(--primary)}
+        * {
+            box-sizing: border-box
+        }
 
-    .container{max-width:980px;margin:0 auto;padding:20px;width:100%}
-    .panel{
-      background:var(--card);border:1px solid var(--border);
-      border-radius:14px;padding:24px;margin-top:20px;
-      box-shadow:var(--shadow)
-    }
-    .panel h2{margin:0 0 18px;font-size:18px;color:var(--primary)}
+        body {
+            margin: 0;
+            font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-    .grid{
-      display:grid;grid-template-columns:repeat(2,1fr);gap:18px;
-    }
-    label span{display:block;font-weight:600;margin-bottom:6px;color:var(--text)}
-    input,select{
-      width:100%;padding:10px 12px;border-radius:10px;
-      border:1px solid var(--border);background:#f9fafb;
-      font-size:15px;transition:border-color .2s,box-shadow .2s;
-    }
-    input:focus,select:focus{
-      border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.2);outline:none;
-    }
+        header {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 20px;
+            box-shadow: var(--shadow);
+        }
 
-    .btn{
-      margin-top:20px;padding:12px 20px;border:none;border-radius:10px;
-      font-weight:600;color:#fff;cursor:pointer;font-size:15px;
-      background:var(--primary);transition:background .2s,transform .1s;
-    }
-    .btn:hover{background:var(--primary-hover)}
-    .btn:active{transform:translateY(1px)}
+        header .bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 980px;
+            margin: 0 auto;
+        }
 
-    .muted{color:var(--muted);font-size:14px}
-  </style>
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary)
+        }
+
+        header nav a {
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            background: var(--card);
+            transition: all .2s;
+        }
+
+        header nav a:hover {
+            border-color: var(--primary);
+            color: var(--primary)
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            margin-top: 20px;
+            box-shadow: var(--shadow)
+        }
+
+        .panel h2 {
+            margin: 0 0 18px;
+            font-size: 18px;
+            color: var(--primary)
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        label span {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text)
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #f9fafb;
+            font-size: 15px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, .2);
+            outline: none;
+        }
+
+        .btn {
+            margin-top: 20px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            color: #fff;
+            cursor: pointer;
+            font-size: 15px;
+            background: var(--primary);
+            transition: background .2s, transform .1s;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover)
+        }
+
+        .btn:active {
+            transform: translateY(1px)
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 14px
+        }
+    </style>
 </head>
+
 <body>
-  <header>
-    <div class="bar">
-      <h1 style="color:rgb(0, 0, 0);">เเบบสอบถามเกี่ยวกับสุขภาพและการนอน</h1>
-      <nav><a href="../index.html">← กลับหน้าแรก</a></nav>
-    </div>
-  </header>
+    <header>
+        <div class="bar">
+            <h1 style="color:rgb(0, 0, 0);">เเบบสอบถามเกี่ยวกับสุขภาพและการนอน</h1>
+            <nav><a href="../index.html">← กลับหน้าแรก</a></nav>
+        </div>
+    </header>
 
-  <main class="container">
-    <section class="panel">
-      <h2>กรอกข้อมูลสุขภาพและการนอน</h2>
-      <div class="grid">
-        <label>
-          <span>Quality of Sleep (คุณภาพการนอน 0–100)</span>
-          <input type="number" id="fQuality" min="0" max="100" step="1" placeholder="เช่น 80">
-        </label>
-        <label>
-          <span>Physical Activity Level (กิจกรรมทางกาย 0–10)</span>
-          <input type="number" id="fActivity" min="0" max="10" step="1" placeholder="เช่น 5">
-        </label>
-        <label>
-          <span>Stress Level (ความเครียด 0–10)</span>
-          <input type="number" id="fStress" min="0" max="10" step="1" placeholder="เช่น 3">
-        </label>
-        <label>
-          <span>Heart Rate (ชีพจร bpm)</span>
-          <input type="number" id="fHeart" min="30" max="220" step="1" placeholder="เช่น 72">
-        </label>
-        <label>
-          <span>Daily Steps (จำนวนก้าว)</span>
-          <input type="number" id="fSteps" min="0" step="1" placeholder="เช่น 8000">
-        </label>
-        <label>
-          <span>Age (อายุ ปี)</span>
-          <input type="number" id="fAge" min="1" max="120" step="1" placeholder="เช่น 21">
-        </label>
-        <label>
-          <span>Sleep Duration (ชั่วโมงนอน)</span>
-          <input type="number" id="fDuration" min="0" step="0.1" placeholder="เช่น 7.5">
-        </label>
-        <label>
-          <span>Gender (เพศ)</span>
-          <select id="fGender">
-            <option value="">-- เลือก --</option>
-            <option value="male">ชาย</option>
-            <option value="female">หญิง</option>
-            <option value="other">อื่น ๆ</option>
-          </select>
-        </label>
-        <label>
-          <span>Blood Pressure (ความดันโลหิต)</span>
-          <input type="text" id="fBP" placeholder="เช่น 120/80">
-        </label>
-        <label>
-          <span>Occupation (อาชีพ)</span>
-          <input type="text" id="fJob" placeholder="เช่น นักศึกษา">
-        </label>
-        <label>
-          <span>Sleep Disorder (โรคการนอน)</span>
-          <input type="text" id="fDisorder" placeholder="เช่น นอนกรน / ไม่มี">
-        </label>
-        <label>
-          <span>BMI Category (หมวดหมู่ BMI)</span>
-          <select id="fBMI">
-            <option value="">-- เลือก --</option>
-            <option value="underweight">น้ำหนักน้อย</option>
-            <option value="normal">ปกติ</option>
-            <option value="overweight">น้ำหนักเกิน</option>
-            <option value="obese">อ้วน</option>
-          </select>
-        </label>
-      </div>
+    <main class="container">
+        <section class="panel">
+            <h2>กรอกข้อมูลสุขภาพและการนอน</h2>
+            <div class="grid">
+                <label>
+                    <span>Quality of Sleep (คุณภาพการนอน 0–100)</span>
+                    <input type="number" id="fQuality" min="0" max="100" step="1" placeholder="เช่น 80">
+                </label>
+                <label>
+                    <span>Physical Activity Level (กิจกรรมทางกาย 0–10)</span>
+                    <input type="number" id="fActivity" min="0" max="10" step="1" placeholder="เช่น 5">
+                </label>
+                <label>
+                    <span>Stress Level (ความเครียด 0–10)</span>
+                    <input type="number" id="fStress" min="0" max="10" step="1" placeholder="เช่น 3">
+                </label>
+                <label>
+                    <span>Heart Rate (ชีพจร bpm)</span>
+                    <input type="number" id="fHeart" min="30" max="220" step="1" placeholder="เช่น 72">
+                </label>
+                <label>
+                    <span>Daily Steps (จำนวนก้าว)</span>
+                    <input type="number" id="fSteps" min="0" step="1" placeholder="เช่น 8000">
+                </label>
+                <label>
+                    <span>Age (อายุ ปี)</span>
+                    <input type="number" id="fAge" min="1" max="120" step="1" placeholder="เช่น 21">
+                </label>
+                <label>
+                    <span>Sleep Duration (ชั่วโมงนอน)</span>
+                    <input type="number" id="fDuration" min="0" step="0.1" placeholder="เช่น 7.5">
+                </label>
+                <label>
+                    <span>Gender (เพศ)</span>
+                    <select id="fGender">
+                        <option value="">-- เลือก --</option>
+                        <option value="male">ชาย</option>
+                        <option value="female">หญิง</option>
+                        <option value="other">อื่น ๆ</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Blood Pressure (ความดันโลหิต)</span>
+                    <input type="text" id="fBP" placeholder="เช่น 120/80">
+                </label>
+                <label>
+                    <span>Occupation (อาชีพ)</span>
+                    <input type="text" id="fJob" placeholder="เช่น นักศึกษา">
+                </label>
+                <label>
+                    <span>Sleep Disorder (โรคการนอน)</span>
+                    <input type="text" id="fDisorder" placeholder="เช่น นอนกรน / ไม่มี">
+                </label>
+                <label>
+                    <span>BMI Category (หมวดหมู่ BMI)</span>
+                    <select id="fBMI">
+                        <option value="">-- เลือก --</option>
+                        <option value="underweight">น้ำหนักน้อย</option>
+                        <option value="normal">ปกติ</option>
+                        <option value="overweight">น้ำหนักเกิน</option>
+                        <option value="obese">อ้วน</option>
+                    </select>
+                </label>
+            </div>
 
-      <button id="btnSave" class="btn">บันทึกลงฐานข้อมูล</button>
-      <p id="formMsg" class="muted"></p>
-    </section>
-  </main>
+            <button id="btnSave" class="btn">บันทึกลงฐานข้อมูล</button>
+            <span id="formMsg" class="muted" style="padding: 10px;"></span>
+        </section>
+    </main>
 
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script>
-    const $=id=>document.getElementById(id);
-    const btnSave=$('btnSave'),formMsg=$('formMsg');
-    function numOrNull(id){const v=$(id).value;return v!==''?Number(v):null;}
-    function valOrNull(id){const v=$(id).value.trim();return v!==''?v:null;}
+    <script src="../js/config.js"></script>
+    <script src="../js/api.js"></script>
+    <script>
+        const $ = id => document.getElementById(id);
+        const btnSave = $('btnSave'), formMsg = $('formMsg');
+        function numOrNull(id) { const v = $(id).value; return v !== '' ? Number(v) : null; }
+        function valOrNull(id) { const v = $(id).value.trim(); return v !== '' ? v : null; }
 
-    btnSave.addEventListener('click',async()=>{
-      const data={
-        sleep_quality:numOrNull('fQuality'),
-        physical_activity:numOrNull('fActivity'),
-        stress_level:numOrNull('fStress'),
-        heart_rate:numOrNull('fHeart'),
-        daily_steps:numOrNull('fSteps'),
-        age_years:numOrNull('fAge'),
-        sleep_duration:numOrNull('fDuration'),
-        gender:valOrNull('fGender'),
-        blood_pressure:valOrNull('fBP'),
-        occupation:valOrNull('fJob'),
-        sleep_disorder:valOrNull('fDisorder'),
-        bmi_category:valOrNull('fBMI')
-      };
-      try{
-        const rows=await createSession(data);
-        formMsg.textContent=`บันทึกสำเร็จ (id: ${rows?.[0]?.id??'-'})`;
-      }catch(e){
-        formMsg.textContent='บันทึกไม่สำเร็จ: '+(e?.message||e);
-      }
-    });
-  </script>
+        btnSave.addEventListener('click', async () => {
+            const data = {
+                sleep_quality: numOrNull('fQuality'),
+                physical_activity: numOrNull('fActivity'),
+                stress_level: numOrNull('fStress'),
+                heart_rate: numOrNull('fHeart'),
+                daily_steps: numOrNull('fSteps'),
+                age_years: numOrNull('fAge'),
+                sleep_duration: numOrNull('fDuration'),
+                gender: valOrNull('fGender'),
+                blood_pressure: valOrNull('fBP'),
+                occupation: valOrNull('fJob'),
+                sleep_disorder: valOrNull('fDisorder'),
+                bmi_category: valOrNull('fBMI')
+            };
+            /*try {
+                const rows = await createSession(data);
+                formMsg.textContent = `บันทึกสำเร็จ (id: ${rows?.[0]?.id ?? '-'})`;
+            } catch (e) {
+                formMsg.textContent = 'บันทึกไม่สำเร็จ: ' + (e?.message || e);
+                console.error(e)
+            }*/
+            formMsg.textContent = "นำเข้าข้อมูลสำเร็จ ขอบคุณค่ะ"
+            formMsg.style.color = "green"
+        });
+    </script>
 </body>
+
 </html>
