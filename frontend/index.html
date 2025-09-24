@@ -49,7 +49,10 @@ File: /index.html (หน้า Main)
 
     /* สถานะผู้ใช้ */
     #authUser { display:flex; align-items:center; gap:8px; color:#374151; font-weight:600; }
-    .status-ok { padding:6px 10px; border-radius:999px; background:#e6f4ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+    .avatar {
+      width: 26px; height: 26px; display: inline-grid; place-items: center;
+      border-radius: 50%; background: #2563eb; color: #fff; font-weight: 700;
+    }
 
     /* มือถือ */
     .hamburger { display: none; margin-left: auto; font-size: 20px; background: none; border: none; padding: 8px 10px; border-radius: 10px; }
@@ -141,18 +144,24 @@ File: /index.html (หน้า Main)
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9zZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const authUser = document.getElementById('authUser');
     const btnLogin  = document.getElementById('btnLogin');
     const btnLogout = document.getElementById('btnLogout');
 
+    function avatar(email){
+      const ch = (email||'?').trim()[0]?.toUpperCase() || '?';
+      return `<span class="avatar">${ch}</span>`;
+    }
+
     async function renderAuth(){
       const { data: { session} } = await supabase.auth.getSession();
       if (session?.user) {
-        // ✅ หลังสมัคร/ล็อกอิน: ซ่อนปุ่มเข้าสู่ระบบและแสดงสถานะเรียบร้อยแล้ว
-        authUser.innerHTML = `<span class="status-ok">เข้าสู่ระบบเรียบร้อยแล้ว</span>`;
+        const email = session.user.email;
+        // ✅ ซ่อนปุ่มเข้าสู่ระบบ แล้วแสดงอีเมลผู้ใช้
+        authUser.innerHTML = `${avatar(email)}<span>${email}</span>`;
         btnLogin.style.display = 'none';
         btnLogout.style.display = 'inline-block';
       } else {
