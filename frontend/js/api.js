@@ -209,23 +209,11 @@ async function fetchAllSessions(limit = 500) {
   });
   if (!res.ok) throw new Error(`REST ${res.status} ${await res.text()}`);
   const rows = await res.json();
-  // mapping ชื่อคอลัมน์ให้ JS ใช้งานง่ายขึ้น (optional)
   return rows.map(r => ({
-    person_id: r["Person ID"],
-    quality: r["Quality of Sleep"],
-    activity: r["Physical Activity Level"],
-    stress: r["Stress Level"],
-    heart_rate: r["Heart Rate"],
-    steps: r["Daily Steps"],
-    age: r["Age"],
-    duration: r["Sleep Duration"],
-    gender: r["Gender"],
-    bp: r["Blood Pressure"],
     occupation: r["Occupation"],
-    disorder: r["Sleep Disorder"],
-    bmi_cat: r["BMI Category"],
-    // ...ถ้ามีคอลัมน์อื่นเพิ่มก็ใส่ได้
-    _raw: r // เก็บ raw object เผื่อใช้ชื่อเดิม
+    duration: r["Sleep Duration"],
+    // ...map field อื่นๆ ตามต้องการ
+    _raw: r
   }));
 }
 
