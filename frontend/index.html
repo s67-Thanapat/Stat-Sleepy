@@ -27,15 +27,29 @@ File: /index.html (หน้า Main)
     .brand{font-weight:800;letter-spacing:.2px;color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px}
     .brand img{height:42px;width:auto;display:block}
     .menu2{display:flex;align-items:center;gap:16px;margin-left:auto;flex-wrap:wrap}
-    .menu2 a{color:inherit;text-decoration:none;padding:8px 10px;border-radius:12px;border:1px solid transparent}
-    .menu2 a:hover{background:rgba(0,0,0,.04)}
+    .menu2 a{color:#0b0c10;text-decoration:none;padding:8px 10px;border-radius:12px;border:1px solid transparent}
+
+    /* FIX: menu hover readable */
+    .nav-main .menu2 a:hover,
+    .nav-main .menu2 a:focus-visible{
+      background:rgba(2, 81, 250, 0.06);
+      color:#0b0c10;                /* ย้ำสีตัวอักษรให้ชัด ไม่โดน a:hover อื่นครอบ */
+      border-color:rgba(0,0,0,.08);
+      outline:0;
+    }
+    .nav-main .menu2 a.active{
+      background:#e8eefc;
+      color:#1e40af;
+      border-color:rgba(37,99,235,.25);
+      font-weight:600;
+    }
 
     .btn{border:1px solid rgba(0,0,0,.1);background:#f6f7f9;padding:8px 12px;border-radius:12px;text-decoration:none}
-    .btn-primary{background:#2563eb;color:#fff;border-color:transparent}
+    .btn-primary{background:#fff;color:#fff;border-color:transparent}
     .btn-primary:hover{filter:brightness(.95)}
 
     /* auth status */
-    #authUser{display:flex;align-items:center;gap:8px;color:#374151;font-weight:600}
+    #authUser{display:flex;align-items:center;gap:8px;color:#075fec;font-weight:600}
     .avatar{width:26px;height:26px;display:inline-grid;place-items:center;border-radius:50%;background:#2563eb;color:#fff;font-weight:700}
 
     /* mobile */
@@ -47,10 +61,19 @@ File: /index.html (หน้า Main)
       .menu2.open{display:flex}
     }
 
+    /* HERO/CONTAINER */
+    .container{max-width:1080px;margin:0 auto;padding:16px}
+    .hero h1{margin:18px 0 8px}
+    .muted{color:#6b7280}
+
+    .quick-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+    .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(0,0,0,.08);background:#fff;color:#0b0c10;text-decoration:none;padding:8px 12px;border-radius:999px}
+    .chip:hover{background:#f5f7fb}
+
     /* VIDEO: How-to section */
     .video-section{
       max-width: 960px;
-      margin: 32px auto;
+      margin: 24px auto 8px;
       padding: 16px;
       background: #fff;
       border: 1px solid rgba(0,0,0,.08);
@@ -63,9 +86,38 @@ File: /index.html (หน้า Main)
     .video-wrap{width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000}
     .video-wrap iframe{width:100%;height:100%;border:0;display:block}
 
-    .quick-actions .chip[href="#howto"]{
-      border:1px solid rgba(37,99,235,.25);
+    /* SHOWCASE: Demo cards under video */
+    .showcase{max-width: 1080px;margin: 10px auto 28px;padding: 0 8px}
+    .showcase-title{font-size:18px;font-weight:800;margin:14px 0 10px}
+    .showcase-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    @media (max-width:960px){ .showcase-grid{grid-template-columns:repeat(2,1fr)} }
+    @media (max-width:640px){ .showcase-grid{grid-template-columns:1fr} }
+
+    .demo-card{display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.05);overflow:hidden;transition:transform .12s ease, box-shadow .2s ease, border-color .2s ease}
+    .demo-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.08);border-color:rgba(37,99,235,.25)}
+    .demo-thumb{background:linear-gradient(180deg,#f3f6ff,#fff);height:150px;display:flex;align-items:center;justify-content:center}
+    .demo-body{padding:12px 14px}
+    .demo-title{margin:0 0 4px;font-weight:800}
+    .demo-desc{margin:0;color:#64748b;font-size:14px}
+    .thumb-svg{width:88%;max-width:320px;height:auto;opacity:.95}
+
+    /* Survey callout */
+    .survey-callout{
+      max-width:1080px;margin:24px auto;padding:20px;
+      background:#fff;border:1px solid rgba(0,0,0,.08);
+      border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.06);
+      display:flex;align-items:center;gap:18px;flex-wrap:wrap;
     }
+    .survey-callout .icon{
+      width:58px;height:58px;border-radius:14px;
+      display:grid;place-items:center;background:#eef2ff;color:#2563eb;font-size:26px;
+    }
+    .survey-callout h2{margin:0;font-size:20px}
+    .survey-callout p{margin:4px 0 0;color:#6b7280}
+    .survey-callout .actions{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+    .survey-callout .btn-primary{padding:10px 16px;border-radius:10px}
+
+    .footer{padding:18px 16px;color:#6b7280}
   </style>
 </head>
 <body>
@@ -82,8 +134,8 @@ File: /index.html (หน้า Main)
       </div>
       <div class="tb-right">
         <a class="tb-link" href="#">📍 Google Maps</a>
-        <a class="tb-link" href="tel:025552000">📞 0-2555-2000</a>
-        <a class="tb-link" href="mailto:hello@sleepstats.app">✉️ hello@sleepstats.app</a>
+        <a class="tb-link" href="tel:025552000">📞 029-599-8999</a>
+        <a class="tb-link" href="mailto:hello@sleepstats.app">✉️ hello@sleepstats.ac.th</a>
       </div>
     </div>
   </div>
@@ -99,9 +151,9 @@ File: /index.html (หน้า Main)
       <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">☰</button>
 
       <nav class="menu2" id="menu">
-        <a href="./pages/graph-age-sleep.html">อายุ × การนอน (Histogram)</a>
-        <a href="./pages/graph-quality-trend.html">แนวโน้มคุณภาพการนอน</a>
-        <a href="./pages/graph-time-distribution.html">กระจายช่วงเวลานอน</a>
+        <a href="./pages/graph-age-sleep.html">Histogram</a>
+        <a href="./pages/graph-quality-trend.html">Boxplot</a>
+        <a href="./pages/graph-time-distribution.html">Bar chart</a>
         <a href="./pages/survey.html">กรอกแบบสอบถาม</a>
 
         <!-- auth area -->
@@ -115,15 +167,10 @@ File: /index.html (หน้า Main)
   <!-- MAIN -->
   <main class="container">
     <section class="hero">
-      <h1>สรุปภาพรวมการนอน</h1>
-      <p class="muted">เลือกชนิดกราฟจากแถบด้านบนเพื่อดูรายละเอียดเชิงลึก หรือเริ่มเก็บข้อมูลผ่านแบบสอบถาม</p>
-      <div class="quick-actions">
-        <a class="chip" href="./pages/graph-age-sleep.html">ดูกราฟ อายุ × ชั่วโมงนอน</a>
-        <a class="chip" href="./pages/graph-quality-trend.html">ดูแนวโน้มคุณภาพ</a>
-        <a class="chip" href="./pages/graph-time-distribution.html">ดูการกระจายช่วงเวลา</a>
-        <a class="chip" href="./pages/survey.html">กรอกแบบสอบถาม</a>
-        <a class="chip" href="#howto">ดูวิดีโอวิธีใช้เว็บไซต์</a>
-      </div>
+      <center><h1>Wellcome To Stat World</h1></center>
+      <center><h3>"ยินดีต้อนรับ"</h3></center>
+      <center><p class="muted">เลือกชนิดกราฟจากแถบด้านบนเพื่อดูรายละเอียดเชิงลึก หรือเริ่มเก็บข้อมูลผ่านแบบสอบถาม</p></center>
+    
     </section>
 
     <!-- How-to Video -->
@@ -133,9 +180,8 @@ File: /index.html (หน้า Main)
       </div>
       <p class="video-desc">คลิปสั้นสรุปฟีเจอร์หลัก และวิธีดูกราฟต่าง ๆ บน SleepStats</p>
       <div class="video-wrap">
-        <!-- 🔴 เปลี่ยน VIDEO_ID ด้านล่างเป็น ID ของ YouTube -->
         <iframe
-          src="https://www.youtube.com/watch?v=xNUx-rMGvvw"
+          src="https://www.youtube.com/embed/ZK-rNEhJIDs?si=YiBZYuHUDodw4agn"
           title="SleepStats - วิธีใช้งานเว็บไซต์"
           loading="lazy"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -145,17 +191,87 @@ File: /index.html (หน้า Main)
       </div>
     </section>
 
-    <section class="cards">
-      <article class="card">
-        <h2>เริ่มต้นยังไงดี?</h2>
-        <p>อัปโหลดข้อมูลการนอนของคุณ หรือกรอกแบบสอบถามสั้น ๆ แล้วกลับมาดูกราฟสรุปผลได้ทุกเมื่อ</p>
-        <a class="btn btn-primary" href="./pages/survey.html">ไปหน้าแบบสอบถาม</a>
-      </article>
-      <article class="card">
-        <h2>สำรวจกราฟ</h2>
-        <p>เจาะลึกความสัมพันธ์ของอายุและชั่วโมงการนอน วิเคราะห์คุณภาพการนอน และช่วงเวลาที่ชอบนอน</p>
-        <a class="btn" href="./sleepstat.html">ไปที่กราฟ</a>
-      </article>
+    <!-- Showcase: Demo previews -->
+    <section class="showcase">
+      <h3 class="showcase-title">ตัวอย่างกราฟ (คลิกเพื่อดูแบบเต็ม)</h3>
+      <div class="showcase-grid">
+        <a class="demo-card" href="./pages/graph-age-sleep.html" aria-label="เปิดดู Histogram อายุ × ชั่วโมงนอน">
+          <div class="demo-thumb">
+            <svg viewBox="0 0 300 150" class="thumb-svg" role="img" aria-label="ตัวอย่าง Histogram">
+              <rect x="0" y="0" width="300" height="150" fill="white"/>
+              <g fill="#2563eb">
+                <rect x="20"  y="90" width="24" height="40" rx="4"/>
+                <rect x="54"  y="70" width="24" height="60" rx="4"/>
+                <rect x="88"  y="40" width="24" height="90" rx="4"/>
+                <rect x="122" y="30" width="24" height="100" rx="4"/>
+                <rect x="156" y="48" width="24" height="82" rx="4"/>
+                <rect x="190" y="78" width="24" height="52" rx="4"/>
+                <rect x="224" y="96" width="24" height="34" rx="4"/>
+              </g>
+              <line x1="10" y1="130" x2="290" y2="130" stroke="#cbd5e1" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="demo-body">
+            <h4 class="demo-title">Histogram — อายุ × ชั่วโมงนอน</h4>
+            <p class="demo-desc">ดูการกระจายตัวของชั่วโมงการนอนในช่วงอายุที่ต่างกัน</p>
+          </div>
+        </a>
+
+        <a class="demo-card" href="./pages/graph-quality-trend.html" aria-label="เปิดดู Boxplot คุณภาพการนอน">
+          <div class="demo-thumb">
+            <svg viewBox="0 0 300 150" class="thumb-svg" role="img" aria-label="ตัวอย่าง Boxplot">
+              <rect x="0" y="0" width="300" height="150" fill="white"/>
+              <g stroke="#16a34a" stroke-width="3" fill="none">
+                <line x1="60" y1="30" x2="60" y2="120"/>
+                <rect x="40" y="60" width="40" height="40" fill="#dcfce7"/>
+                <line x1="40" y1="80" x2="80" y2="80"/>
+                <line x1="150" y1="45" x2="150" y2="115"/>
+                <rect x="130" y="65" width="40" height="30" fill="#dcfce7"/>
+                <line x1="130" y1="80" x2="170" y2="80"/>
+                <line x1="240" y1="35" x2="240" y2="125"/>
+                <rect x="220" y="70" width="40" height="35" fill="#dcfce7"/>
+                <line x1="220" y1="88" x2="260" y2="88"/>
+              </g>
+            </svg>
+          </div>
+          <div class="demo-body">
+            <h4 class="demo-title">Boxplot — คุณภาพการนอน</h4>
+            <p class="demo-desc">สรุปค่ากลาง การกระจาย และจุดผิดปกติของคุณภาพการนอน</p>
+          </div>
+        </a>
+
+        <a class="demo-card" href="./pages/graph-time-distribution.html" aria-label="เปิดดู Bar chart การกระจายช่วงเวลาเข้านอน">
+          <div class="demo-thumb">
+            <svg viewBox="0 0 300 150" class="thumb-svg" role="img" aria-label="ตัวอย่าง Bar chart">
+              <rect x="0" y="0" width="300" height="150" fill="white"/>
+              <g fill="#f59e0b">
+                <rect x="35"  y="70" width="30" height="60" rx="4"/>
+                <rect x="85"  y="90" width="30" height="40" rx="4"/>
+                <rect x="135" y="50" width="30" height="80" rx="4"/>
+                <rect x="185" y="35" width="30" height="95" rx="4"/>
+                <rect x="235" y="85" width="30" height="45" rx="4"/>
+              </g>
+              <line x1="20" y1="130" x2="280" y2="130" stroke="#cbd5e1" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="demo-body">
+            <h4 class="demo-title">Bar chart — กระจายช่วงเวลาเข้านอน</h4>
+            <p class="demo-desc">ดูชั่วโมงที่มักเข้านอนบ่อยที่สุดในแต่ละช่วงเวลา</p>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Survey CTA -->
+    <section class="survey-callout">
+      <div class="icon">📝</div>
+      <div class="text">
+        <h2>แบบสอบถาม</h2>
+        <p>อยากร่วมเป็นส่วนหนึ่งกับเรา สามารถเข้ามาให้ข้อมูลสุขภาพการนอนกับเราได้ ขอบคุณน้า</p>
+      </div>
+      <div class="actions">
+        <a class="btn btn-primary" href="./pages/survey.html">ไปทำแบบสอบถาม</a>
+      </div>
     </section>
   </main>
 
@@ -169,14 +285,8 @@ File: /index.html (หน้า Main)
     const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
     const SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9zZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
-
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storage: window.localStorage
-      }
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage }
     });
 
     const authUser = document.getElementById('authUser');
@@ -231,7 +341,6 @@ File: /index.html (หน้า Main)
       if (email) { showLoggedIn(email); return; }
 
       if (initial) { setTimeout(() => renderAuth(false), 250); return; }
-
       showLoggedOut();
     }
     renderAuth(true);
