@@ -231,17 +231,10 @@
                 </label>
             </div>
 
-<<<<<<< HEAD
             <button id="btnSave" class="btn">บันทึกลงฐานข้อมูล</button>
             <span id="formMsg" class="muted" style="padding: 10px;"></span>
         </section>
     </main>
-=======
-      <button id="btnSave" class="btn">บันทึกลงฐานข้อมูล</button>
-      <span id="formMsg" class="muted"style ="padding: 10px;"></span>
-    </section>
-  </main>
->>>>>>> 0ed76e8bd185328ace5f9e46731d18f799ed4b82
 
     <script src="../js/config.js"></script>
     <script src="../js/api.js"></script>
@@ -251,7 +244,6 @@
         function numOrNull(id) { const v = $(id).value; return v !== '' ? Number(v) : null; }
         function valOrNull(id) { const v = $(id).value.trim(); return v !== '' ? v : null; }
 
-<<<<<<< HEAD
         btnSave.addEventListener('click', async () => {
             const data = {
                 sleep_quality: numOrNull('fQuality'),
@@ -278,33 +270,6 @@
             formMsg.style.color = "green"
         });
     </script>
-=======
-    btnSave.addEventListener('click',async()=>{
-      const data={
-        sleep_quality:numOrNull('fQuality'),
-        physical_activity:numOrNull('fActivity'),
-        stress_level:numOrNull('fStress'),
-        heart_rate:numOrNull('fHeart'),
-        daily_steps:numOrNull('fSteps'),
-        age_years:numOrNull('fAge'),
-        sleep_duration:numOrNull('fDuration'),
-        gender:valOrNull('fGender'),
-        blood_pressure:valOrNull('fBP'),
-        occupation:valOrNull('fJob'),
-        sleep_disorder:valOrNull('fDisorder'),
-        bmi_category:valOrNull('fBMI')
-      };
-      /*try{
-        const rows=await createSession(data);
-        formMsg.textContent=`บันทึกสำเร็จ (id: ${rows?.[0]?.id??'-'})`;
-      }catch(e){
-        formMsg.textContent='บันทึกไม่สำเร็จ: '+(e?.message||e);
-      }*/
-     formMsg.textContent = "นำเข้าข้อมูลสำเร็จ ขอบคุณค่ะ";
-     formMsg.style.color = "green";
-    });
-  </script>
->>>>>>> 0ed76e8bd185328ace5f9e46731d18f799ed4b82
 </body>
 
 </html>
