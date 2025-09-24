@@ -8,9 +8,11 @@
   <style>
     :root{--bg1:#0b5bd3;--bg2:#23a6ff;--text:#0f172a;--muted:#6b7280;--border:#e5e7eb;--primary:#2563eb;--primary-2:#1e40af;--card:#ffffff}
     *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);
+    body{
+      margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);
       background:radial-gradient(1200px 600px at 15% -10%,#ffffff66,transparent),linear-gradient(120deg,var(--bg1),var(--bg2));
-      display:grid;place-items:center;padding:24px}
+      display:grid;place-items:center;padding:24px
+    }
     .card{width:min(92vw,380px);background:var(--card);border:1px solid #e6e9f3;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:24px 24px 18px}
     h1{margin:0 0 4px;font-weight:800;letter-spacing:.3px;text-align:center}
     .sub{color:var(--muted);margin:0 0 18px;font-size:.95rem;text-align:center}
@@ -30,7 +32,7 @@
     .foot a{color:var(--primary);text-decoration:none}.foot a:hover{text-decoration:underline}
   </style>
 
-  <!-- ใช้ UMD build (window.supabase) -->
+  <!-- ใช้ UMD build (มี window.supabase) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -102,12 +104,14 @@
       if(saved){ emailEl.value = saved; rememberEl.checked = true; }
     })();
 
+    // ปั้น URL ปลายทางให้ปลอดภัย
     function resolveNext(next, fallback){
       const v = next || fallback || "/index.html";
-      if (/^https?:\/\//i.test(v)) return v;
-      return `${location.origin}${v.startsWith("/") ? v : `/${v}`}`;
+      if (/^https?:\/\//i.test(v)) return v;          // URL เต็ม
+      return `${location.origin}${v.startsWith("/") ? v : `/${v}`}`; // path
     }
 
+    // --------- SIGN IN & CHECK ADMIN BY ID ONLY ---------
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       msg.style.color = "#0f172a";
@@ -116,51 +120,41 @@
       try {
         const email = emailEl.value.trim();
         const password = passEl.value;
+
         if(rememberEl.checked) localStorage.setItem("ss_email", email);
         else localStorage.removeItem("ss_email");
 
         const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signErr) { msg.style.color="crimson"; msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`; return; }
 
-        // -------- DEBUG #1: แสดง user.id / user.email --------
+        // ผู้ใช้ปัจจุบัน
         const { data: { user }, error: uErr } = await supabase.auth.getUser();
-        console.log("[debug] getUser error:", uErr);
-        console.log("[debug] user.id =", user?.id, "| user.email =", user?.email);
         if(uErr || !user){ msg.style.color="crimson"; msg.textContent="ไม่พบข้อมูลผู้ใช้หลังเข้าสู่ระบบ"; return; }
 
-        // -------- DEBUG #2: อ่านโปรไฟล์ด้วย id (และลอง fallback ด้วย email) --------
-        let { data: profile, error: pErr1 } = await supabase
+        // ✅ ตรวจสิทธิ์จาก profiles ด้วย id เท่านั้น
+        const { data: profile, error: pErr } = await supabase
           .from("profiles")
-          .select("id,email,is_admin")
+          .select("is_admin")
           .eq("id", user.id)
           .maybeSingle();
-        console.log("[debug] profile by id:", profile, "| error:", pErr1);
 
-        if (!profile) {
-          const { data: p2, error: pErr2 } = await supabase
-            .from("profiles")
-            .select("id,email,is_admin")
-            .eq("email", user.email)
-            .maybeSingle();
-          profile = p2 || null;
-          console.log("[debug] profile by email:", p2, "| error:", pErr2);
-        }
-
+        // ถ้าไม่มีแถวใน profiles ให้ถือว่าไม่ใช่แอดมิน
         const isAdmin = !!profile?.is_admin;
-        console.log("[debug] isAdmin =", isAdmin);
 
-        // -------- DEBUG #3: ปลายทางที่จะไป --------
+        // ปลายทาง
         const nextParam = new URLSearchParams(location.search).get("next");
         const fallback  = isAdmin ? "/admin.html" : "/index.html?login=1";
         const finalUrl  = resolveNext(nextParam, fallback);
-        console.log("[debug] nextParam =", nextParam, "| finalUrl =", finalUrl);
 
         msg.style.color = "seagreen";
-        msg.textContent = isAdmin ? "เข้าสู่ระบบสำเร็จ (แอดมิน) กำลังเปลี่ยนหน้า..." : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
+        msg.textContent = isAdmin
+          ? "เข้าสู่ระบบสำเร็จ (แอดมิน) กำลังเปลี่ยนหน้า..."
+          : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
 
+        // redirect ให้แน่ใจว่าไปแน่นอน
         try { location.replace(finalUrl); } catch {}
-        setTimeout(() => { try { window.location.assign(finalUrl); } catch {} }, 200);
-        setTimeout(() => { window.location.href = finalUrl; }, 600);
+        setTimeout(() => { try { window.location.assign(finalUrl); } catch {} }, 150);
+        setTimeout(() => { window.location.href = finalUrl; }, 400);
 
       } catch (err) {
         console.error("[signin fatal]", err);
