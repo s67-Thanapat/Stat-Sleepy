@@ -30,16 +30,13 @@
       box-shadow: 0 20px 60px rgba(0,0,0,.15);
       padding:24px 24px 18px;
     }
-    h1{
-      margin:0 0 4px; font-weight:800; letter-spacing:.3px;
-    }
-    .sub{color:var(--muted); margin:0 0 18px; font-size:.95rem}
+    h1{ margin:0 0 4px; font-weight:800; letter-spacing:.3px; text-align:center }
+    .sub{color:var(--muted); margin:0 0 18px; font-size:.95rem; text-align:center}
 
     .field{margin:10px 0 12px}
     .label{display:block; font-size:.9rem; color:var(--muted); margin:0 0 6px}
     .input-wrap{
-      position:relative;
-      border:1px solid var(--border); border-radius:10px; background:#fff;
+      position:relative; border:1px solid var(--border); border-radius:10px; background:#fff;
       display:flex; align-items:center;
     }
     input{
@@ -69,10 +66,7 @@
     button:hover{ background:var(--primary-2) }
 
     #msg{ margin-top:10px; font-size:.92rem }
-
-    .foot{
-      margin-top:12px; text-align:center; color:var(--muted); font-size:.92rem
-    }
+    .foot{ margin-top:12px; text-align:center; color:var(--muted); font-size:.92rem }
     .foot a{ color:var(--primary); text-decoration:none }
     .foot a:hover{ text-decoration:underline }
   </style>
@@ -82,9 +76,9 @@
 </head>
 <body>
   <div class="card">
-    <center><h1>Sign in</h1></center>
-    <center><p class="sub">เข้าสู่ระบบเพื่อใช้งานแดชบอร์ดของคุณ</p>
-</center>
+    <h1>Sign in</h1>
+    <p class="sub">เข้าสู่ระบบเพื่อใช้งานแดชบอร์ดของคุณ</p>
+
     <form id="loginForm">
       <div class="field">
         <label class="label" for="email">อีเมล</label>
@@ -118,7 +112,7 @@
   </div>
 
   <script>
-    // ⭐ ใส่ค่าจาก Supabase ของโปรเจกต์คุณ
+    // ⭐ ใช้คีย์โปรเจกต์จริงของคุณ
     const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -143,7 +137,7 @@
       if(saved){ emailEl.value = saved; rememberEl.checked = true; }
     })();
 
-    // Login
+    // 🔐 Login + ตรวจสิทธิ์แอดมิน
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       msg.style.color = "#0f172a";
@@ -155,19 +149,41 @@
       if(rememberEl.checked) localStorage.setItem("ss_email", email);
       else localStorage.removeItem("ss_email");
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-      if (error) {
+      const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (signErr) {
         msg.style.color = "crimson";
-        msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${error.message}`;
+        msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`;
         return;
       }
 
-      // สำเร็จ → ไปหน้า admin หรือพารามิเตอร์ next
-      msg.style.color = "seagreen";
-      msg.textContent = "เข้าสู่ระบบสำเร็จ กำลังเปลี่ยนหน้า...";
-      const next = new URLSearchParams(location.search).get("next") || "/admin.html";
-      location.href = next;
+      // ดึง user ปัจจุบัน
+      const { data: { user }, error: uErr } = await supabase.auth.getUser();
+      if(uErr || !user){
+        msg.style.color = "crimson";
+        msg.textContent = "ไม่พบข้อมูลผู้ใช้หลังเข้าสู่ระบบ";
+        return;
+      }
+
+      // อ่านสิทธิ์จาก profiles.is_admin ของผู้ใช้
+      const { data: profile, error: pErr } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+
+      // ถ้าอ่านไม่ได้ (เช่นยังไม่มีแถว) ถือว่าไม่ใช่แอดมิน
+      const isAdmin = !!(profile && profile.is_admin === true);
+
+      if (isAdmin) {
+        const next = new URLSearchParams(location.search).get("next") || "/admin.html";
+        msg.style.color = "seagreen";
+        msg.textContent = "เข้าสู่ระบบสำเร็จ (แอดมิน) กำลังเปลี่ยนหน้า...";
+        location.href = next;
+      } else {
+        msg.style.color = "seagreen";
+        msg.textContent = "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
+        location.href = "/index.html?login=1";
+      }
     });
 
     // ลืมรหัสผ่าน
