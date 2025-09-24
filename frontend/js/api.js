@@ -28,7 +28,7 @@ function ensurePapa() {
 
 // ---------- Insert หลายแถวรวดเดียว ----------
 async function createSessionsBulk(rows) {
-  const url = `${SUPABASE_URL}/rest/v1/sleep_sessions`;
+  const url = `${SUPABASE_URL}/sleep_sessions?select=*,Quality%20of%20Sleep,Age,Sleep%20Duration&order=Person%20ID.desc`;
   const res = await fetch(url, {
     method: "POST",
     headers: REST_HEADERS,
@@ -196,6 +196,37 @@ async function fetchAllSessions({ days = null, order = "start_time.desc", limit 
   });
   if (!res.ok) throw new Error(`REST ${res.status} ${await res.text()}`);
   return res.json();
+}
+
+// ตัวอย่างฟังก์ชันดึงข้อมูลทั้งหมด
+async function fetchAllSessions(limit = 500) {
+  const url = `${window.SUPABASE_URL}/rest/v1/sleep_sessions?select=*&order=Person%20ID.desc&limit=${limit}`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: window.SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${window.SUPABASE_ANON_KEY}`
+    }
+  });
+  if (!res.ok) throw new Error(`REST ${res.status} ${await res.text()}`);
+  const rows = await res.json();
+  // mapping ชื่อคอลัมน์ให้ JS ใช้งานง่ายขึ้น (optional)
+  return rows.map(r => ({
+    person_id: r["Person ID"],
+    quality: r["Quality of Sleep"],
+    activity: r["Physical Activity Level"],
+    stress: r["Stress Level"],
+    heart_rate: r["Heart Rate"],
+    steps: r["Daily Steps"],
+    age: r["Age"],
+    duration: r["Sleep Duration"],
+    gender: r["Gender"],
+    bp: r["Blood Pressure"],
+    occupation: r["Occupation"],
+    disorder: r["Sleep Disorder"],
+    bmi_cat: r["BMI Category"],
+    // ...ถ้ามีคอลัมน์อื่นเพิ่มก็ใส่ได้
+    _raw: r // เก็บ raw object เผื่อใช้ชื่อเดิม
+  }));
 }
 
 // สรุปสถิติพื้นฐาน

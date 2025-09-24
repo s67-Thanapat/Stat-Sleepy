@@ -12,77 +12,94 @@
     <header class="container">
         <h1>บันทึกการนอน (ฟอร์ม)</h1>
         <nav>
-            <a href="../index.html">← กลับหน้าแรก</a>
-            
+            <a href="./upload.html">← กลับหน้านำเข้า</a>
         </nav>
     </header>
     <main class="container">
         <section class="panel">
             <h2>บันทึกด้วยฟอร์ม (เพิ่ม 1 รายการ)</h2>
-            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
-                <label>วันที่
-                    <input type="date" id="fDate" required />
+            <form id="sleepForm" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+                <label>เลข ID
+                    <input type="number" id="personId" required />
                 </label>
-                <label>เวลาเริ่มนอน
-                    <input type="time" id="fStart" required />
+                <label>คุณภาพการนอน (0-100)
+                    <input type="number" id="quality" min="0" max="100" step="1" required />
                 </label>
-                <label>เวลาตื่น
-                    <input type="time" id="fEnd" required />
+                <label>อัตราการทำกิจกรรมทางกาย
+                    <input type="number" id="activity" step="0.01" />
                 </label>
-                <label>คุณภาพการนอน (0–100)
-                    <input type="number" id="fQuality" min="0" max="100" step="1" placeholder="เช่น 80" />
+                <label>ความเครียด
+                    <input type="number" id="stress" step="0.01" />
                 </label>
-                <label>ส่วนสูง (ซม.)
-                    <input type="number" id="fHeight" min="50" max="250" step="0.1" placeholder="เช่น 170.5" />
+                <label>อัตราการเต้นของหัวใจ
+                    <input type="number" id="heartRate" step="0.01" />
                 </label>
-                <label>น้ำหนัก (กก.)
-                    <input type="number" id="fWeight" min="20" max="300" step="0.1" placeholder="เช่น 60.0" />
+                <label>จำนวนก้าวเดินต่อวัน
+                    <input type="number" id="steps" step="1" />
                 </label>
-                <label>อายุ (ปี)
-                    <input type="number" id="fAge" min="1" max="120" step="1" placeholder="เช่น 21" />
+                <label>อายุ
+                    <input type="number" id="age" min="0" max="120" required />
                 </label>
-            </div>
-            <label style="display:block;margin-top:12px;">บันทึกเพิ่มเติม
-                <input type="text" id="fNote" placeholder="เช่น ฝันดี / นอนดึก" />
-            </label>
-            <button id="btnSave" style="margin-top:12px;">บันทึกลงฐานข้อมูล</button>
-            <p id="formMsg" class="muted" style="margin-top:8px;"></p>
+                <label>ระยะเวลานอน (ชั่วโมง)
+                    <input type="number" id="duration" min="0" max="24" step="0.01" required />
+                </label>
+                <label>เพศ
+                    <select id="gender">
+                        <option value="">เลือกเพศ</option>
+                        <option value="Male">ชาย</option>
+                        <option value="Female">หญิง</option>
+                        <option value="Other">อื่นๆ</option>
+                    </select>
+                </label>
+                <label>ความดันโลหิต
+                    <input type="text" id="bp" placeholder="เช่น 120/80" />
+                </label>
+                <label>อาชีพ
+                    <input type="text" id="occupation" />
+                </label>
+                <label>การนอนหลับผิดปกติ
+                    <input type="text" id="disorder" />
+                </label>
+                <label>ระดับ BMI
+                    <input type="text" id="bmiCat" />
+                </label>
+                <div style="grid-column:1/-1;">
+                    <button type="submit" id="btnSave" style="margin-top:12px;">บันทึกลงฐานข้อมูล</button>
+                    <p id="formMsg" class="muted" style="margin-top:8px;"></p>
+                </div>
+            </form>
         </section>
     </main>
-    <script src="../js/config.js"></script>
-    <script src="../js/api.js"></script>
+    <script src="./js/config.js"></script>
+    <script src="./js/api.js"></script>
     <script>
-        const btnSave = document.getElementById('btnSave');
+        const form = document.getElementById('sleepForm');
         const formMsg = document.getElementById('formMsg');
-        btnSave.addEventListener('click', async () => {
-            const d = document.getElementById('fDate').value;
-            const st = document.getElementById('fStart').value;
-            const et = document.getElementById('fEnd').value;
-            const qv = document.getElementById('fQuality').value;
-            const age = document.getElementById('fAge').value;
-            const note = document.getElementById('fNote').value.trim();
-            const height = document.getElementById('fHeight').value;
-            const weight = document.getElementById('fWeight').value;
-            if (!d || !st || !et) {
-                formMsg.textContent = 'กรอก วันที่ / เวลาเริ่ม / เวลาตื่น ให้ครบก่อนนะ';
-                return;
-            }
-            const startLocal = new Date(`${d}T${st}:00`);
-            let endLocal = new Date(`${d}T${et}:00`);
-            if (endLocal <= startLocal) endLocal.setDate(endLocal.getDate() + 1);
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                "Person ID": Number(document.getElementById('personId').value),
+                "Quality of Sleep": Number(document.getElementById('quality').value),
+                "Physical Activity Level": document.getElementById('activity').value !== "" ? Number(document.getElementById('activity').value) : null,
+                "Stress Level": document.getElementById('stress').value !== "" ? Number(document.getElementById('stress').value) : null,
+                "Heart Rate": document.getElementById('heartRate').value !== "" ? Number(document.getElementById('heartRate').value) : null,
+                "Daily Steps": document.getElementById('steps').value !== "" ? Number(document.getElementById('steps').value) : null,
+                "Age": Number(document.getElementById('age').value),
+                "Sleep Duration": Number(document.getElementById('duration').value),
+                "Gender": document.getElementById('gender').value || null,
+                "Blood Pressure": document.getElementById('bp').value || null,
+                "Occupation": document.getElementById('occupation').value || null,
+                "Sleep Disorder": document.getElementById('disorder').value || null,
+                "BMI Category": document.getElementById('bmiCat').value || null
+            };
             try {
-                const rows = await createSession({
-                    start_time: startLocal.toISOString(),
-                    end_time: endLocal.toISOString(),
-                    sleep_quality: qv !== '' ? Number(qv) : null,
-                    note: note || null,
-                    height_cm: height !== '' ? Number(height) : null,
-                    weight_kg: weight !== '' ? Number(weight) : null,
-                    age_years: age !== '' ? Number(age) : null
-                });
-                formMsg.textContent = `บันทึกสำเร็จ (id: ${rows[0]?.id ?? '-'})`;
+                // สมมติว่ามีฟังก์ชัน createSession ใน js/api.js ที่รับ object ตาม schema นี้
+                const rows = await createSession(data);
+                formMsg.textContent = `บันทึกสำเร็จ (id: ${rows[0]?.["Person ID"] ?? '-'})`;
+                formMsg.style.color = "green";
             } catch (e) {
                 formMsg.textContent = 'บันทึกไม่สำเร็จ: ' + (e?.message || e);
+                formMsg.style.color = "crimson";
             }
         });
     </script>

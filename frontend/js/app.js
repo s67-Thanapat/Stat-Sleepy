@@ -49,7 +49,6 @@
   function updateUI() {
     const filtered = filterByGen(rows);
     if (!filtered.length) {
-      emptyMsg.style.display = '';
       avgHoursEl.textContent = '-';
       avgQualityEl.textContent = '-';
       renderChart([], []);

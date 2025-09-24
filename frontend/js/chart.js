@@ -1,14 +1,14 @@
 let chart;
 function renderChart(rows) {
   const ctx = document.getElementById('sleepChart');
-  if (chart) chart.destroy();
+  if (!ctx) return;
+  if (window.sleepChartObj) window.sleepChartObj.destroy();
 
-  // เตรียมข้อมูล scatter
   const dataPoints = rows
-    .filter(r => r.sleep_quality != null && r.duration_minutes != null)
+    .filter(r => r.quality != null && r.duration != null)
     .map(r => ({
-      x: Number(r.sleep_quality),
-      y: Number(r.duration_minutes) / 60
+      x: Number(r.quality),
+      y: Number(r.duration)
     }));
 
   // คำนวณ linear regression (y = a + bx)
@@ -39,7 +39,7 @@ function renderChart(rows) {
     ];
   }
 
-  chart = new Chart(ctx, {
+  window.sleepChartObj = new Chart(ctx, {
     type: 'scatter',
     data: {
       datasets: [
