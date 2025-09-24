@@ -361,7 +361,6 @@
     const form = document.getElementById("loginForm");
     const emailEl = document.getElementById("email");
     const passEl = document.getElementById("password");
-    const passEl = document.getElementById("password");
     const rememberEl = document.getElementById("remember");
     const msg = document.getElementById("msg");
 
@@ -428,11 +427,9 @@
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
         if (error) { msg.style.color = "crimson"; msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`; }
         else { msg.style.color = "seagreen"; msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว"; }
-        if (error) { msg.style.color = "crimson"; msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`; }
-        else { msg.style.color = "seagreen"; msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว"; }
       });
+    })();
   </script>
 </body>
-
 
 </html>

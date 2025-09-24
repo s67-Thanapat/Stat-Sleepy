@@ -4,56 +4,65 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>ชั่วโมงนอนเฉลี่ยแยกตามอาชีพ (Histogram)</title>
+    <title>Bar Chart ชั่วโมงนอนเฉลี่ยแยกตามอาชีพ</title>
     <link rel="stylesheet" href="../css/styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
+    <section class="controls" style="margin-top:16px; display:flex; gap:8px; justify-content:center;">
+        <button id="btnSleep" class="active">Bar chart (avg การนอน ของแต่ละอาชีพ)</button>
+        <button id="btnStress">Bar chart (avg stress ของแต่ละอาชีพ)</button>
+        <button id="btnQuality">Bar chart (avg quality sleep ของแต่ละอาชีพ)</button>
+    </section>
     <header class="container">
-        <h1>ชั่วโมงนอนเฉลี่ยแยกตามอาชีพ (Histogram)</h1>
+        <h1 id="heading">Bar Chart ชั่วโมงนอนเฉลี่ยแยกตามอาชีพ</h1>
         <nav><a href="../index.html">← กลับหน้าแรก</a></nav>
     </header>
     <main class="container">
         <section class="chart" style="height:320px;">
             <canvas id="occupationHistChart"></canvas>
-            <p class="muted" style="margin-top:8px;">ค่าเฉลี่ยชั่วโมงการนอนต่อคืน แยกตามอาชีพ</p>
+            <p class="muted" style="margin-top:8px;" id="chartDesc">
+                ค่าเฉลี่ยชั่วโมงการนอนต่อคืน แยกตามอาชีพ
+            </p>
         </section>
     </main>
     <script src="../js/config.js"></script>
     <script src="../js/api.js"></script>
     <script>
-        async function renderOccupationHistogram(rows) {
-            const ctx = document.getElementById('occupationHistChart');
-            if (!ctx) return;
+        let chartType = "sleep"; // sleep, stress, quality
+        let chartObj = null;
+        let allRows = [];
 
-            // รวมข้อมูลตามอาชีพ
+        function getOccAvg(rows, field, label, color, desc) {
             const occMap = {};
             rows.forEach(r => {
                 const occ = r.occupation || r["Occupation"] || "ไม่ระบุ";
-                const dur = r.duration ?? r["Sleep Duration"];
-                if (dur == null || isNaN(dur)) return;
+                const val = r[field] ?? r[field.replace(/^\w/, c => c.toUpperCase())];
+                if (val == null || isNaN(val)) return;
                 if (!occMap[occ]) occMap[occ] = [];
-                occMap[occ].push(Number(dur));
+                occMap[occ].push(Number(val));
             });
-
-            // เอาเฉพาะอาชีพที่มีข้อมูลมากกว่า 2 คน
             const labels = Object.keys(occMap).filter(k => occMap[k].length > 2);
             const data = labels.map(k => {
                 const arr = occMap[k];
                 return arr.length ? (arr.reduce((s, v) => s + v, 0) / arr.length) : 0;
             });
+            return { labels, data, label, color, desc };
+        }
 
-            // สร้างกราฟ
-            if (window.occupationHistChartObj) window.occupationHistChartObj.destroy();
-            window.occupationHistChartObj = new Chart(ctx, {
+        function renderOccupationHistogram({ labels, data, label, color, desc }) {
+            const ctx = document.getElementById('occupationHistChart');
+            if (!ctx) return;
+            if (chartObj) chartObj.destroy();
+            chartObj = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels,
                     datasets: [{
-                        label: 'ชั่วโมงนอนเฉลี่ย',
+                        label,
                         data,
-                        backgroundColor: '#fbbf24'
+                        backgroundColor: color
                     }]
                 },
                 options: {
@@ -65,17 +74,76 @@
                     },
                     scales: {
                         x: { title: { display: true, text: 'อาชีพ' } },
-                        y: { title: { display: true, text: 'ชั่วโมงนอน' }, beginAtZero: true }
+                        y: { title: { display: true, text: label }, beginAtZero: true }
                     }
                 }
             });
+            document.getElementById('chartDesc').textContent = desc;
+        }
+
+        function getRandomColor() {
+            const letters = "0123456789abcdef";
+            let color = "#";
+            let colors = [];
+            for (let i = 0; i < 6; i++) {
+                for (let j = 0; j < 6; j++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                colors.push(color);
+                color = "#"
+            }
+            return colors;
+        }
+
+        async function updateChart(type) {
+            let config;
+            const heading = document.getElementById("heading");
+            if (type === "sleep") {
+                config = getOccAvg(allRows, "duration", "ชั่วโมงนอนเฉลี่ย", getRandomColor(), "ค่าเฉลี่ยชั่วโมงการนอนต่อคืน แยกตามอาชีพ");
+                heading.textContent = "Bar Chart ชั่วโมงนอนเฉลี่ยแยกตามอาชีพ";
+            } else if (type === "stress") {
+                config = getOccAvg(allRows, "stress", "ค่าเฉลี่ย Stress", getRandomColor(), "ค่าเฉลี่ย Stress แยกตามอาชีพ");
+                heading.textContent = "Bar Chart ความเครียดเฉลี่ยแยกตามอาชีพ";
+            } else if (type === "quality") {
+                config = getOccAvg(allRows, "quality", "ค่าเฉลี่ย Quality of Sleep", getRandomColor(), "ค่าเฉลี่ย Quality of Sleep แยกตามอาชีพ");
+                heading.textContent = "Bar Chart คุณภาพการนอนเฉลี่ยแยกตามอาชีพ";
+            }
+            renderOccupationHistogram(config);
         }
 
         (async function () {
-            const rows = await fetchAllSessions?.(1000) || [];
-            renderOccupationHistogram(rows);
+            allRows = await fetchAllSessions?.(1000) || [];
+            updateChart("sleep");
+
+            document.getElementById("btnSleep").onclick = function () {
+                chartType = "sleep";
+                updateChart("sleep");
+                setActiveBtn("btnSleep");
+            };
+            document.getElementById("btnStress").onclick = function () {
+                chartType = "stress";
+                updateChart("stress");
+                setActiveBtn("btnStress");
+            };
+            document.getElementById("btnQuality").onclick = function () {
+                chartType = "quality";
+                updateChart("quality");
+                setActiveBtn("btnQuality");
+            };
         })();
+
+        function setActiveBtn(id) {
+            ["btnSleep", "btnStress", "btnQuality"].forEach(bid => {
+                document.getElementById(bid).classList.toggle("active", bid === id);
+            });
+        }
     </script>
+    <style>
+        .controls button.active {
+            background: #2563eb;
+            color: #fff;
+        }
+    </style>
 </body>
 
 </html>
