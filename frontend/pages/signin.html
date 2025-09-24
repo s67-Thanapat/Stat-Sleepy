@@ -1,109 +1,181 @@
-<script>
-  // Supabase client
-  const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9zZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-  });
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in</title>
 
-  const form = document.getElementById("loginForm");
-  const emailEl = document.getElementById("email");
-  const passEl  = document.getElementById("password");
-  const rememberEl = document.getElementById("remember");
-  const msg = document.getElementById("msg");
+  <style>
+    :root{--bg1:#0b5bd3;--bg2:#23a6ff;--text:#0f172a;--muted:#6b7280;--border:#e5e7eb;--primary:#2563eb;--primary-2:#1e40af;--card:#ffffff}
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);
+      background:radial-gradient(1200px 600px at 15% -10%,#ffffff66,transparent),linear-gradient(120deg,var(--bg1),var(--bg2));
+      display:grid;place-items:center;padding:24px}
+    .card{width:min(92vw,380px);background:var(--card);border:1px solid #e6e9f3;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:24px 24px 18px}
+    h1{margin:0 0 4px;font-weight:800;letter-spacing:.3px;text-align:center}
+    .sub{color:var(--muted);margin:0 0 18px;font-size:.95rem;text-align:center}
+    .field{margin:10px 0 12px}
+    .label{display:block;font-size:.9rem;color:var(--muted);margin:0 0 6px}
+    .input-wrap{position:relative;border:1px solid var(--border);border-radius:10px;background:#fff;display:flex;align-items:center}
+    input{width:100%;border:0;outline:none;background:transparent;padding:12px 14px;font:inherit;color:inherit}
+    .show-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.9rem;color:var(--primary);cursor:pointer;user-select:none}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 10px;font-size:.9rem}
+    .row a{color:var(--primary);text-decoration:none}.row a:hover{text-decoration:underline}
+    .checkbox{display:flex;align-items:center;gap:8px;user-select:none}
+    .checkbox input{accent-color:var(--primary)}
+    button{width:100%;border:0;outline:0;cursor:pointer;background:var(--primary);color:#fff;font-weight:700;border-radius:12px;padding:12px 14px;margin-top:6px;box-shadow:0 6px 18px rgba(37,99,235,.35)}
+    button:hover{background:var(--primary-2)}
+    #msg{margin-top:10px;font-size:.92rem}
+    .foot{margin-top:12px;text-align:center;color:var(--muted);font-size:.92rem}
+    .foot a{color:var(--primary);text-decoration:none}.foot a:hover{text-decoration:underline}
+  </style>
 
-  // helpers
-  function log(...a){ try{ console.log("[signin]",...a);}catch{} }
-  function fail(text){ msg.style.color="crimson"; msg.textContent=text; }
-  function ok(text){ msg.style.color="seagreen"; msg.textContent=text; }
+  <!-- ✅ โหลดเวอร์ชัน UMD (จะมีตัวแปร global: window.supabase) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+  <div class="card">
+    <h1>Sign in</h1>
+    <p class="sub">เข้าสู่ระบบเพื่อใช้งานแดชบอร์ดของคุณ</p>
 
-  // build final redirect url safely
-  function resolveNext(next, fallback){
-    const v = next || fallback || "/index.html";
-    if (/^https?:\/\//i.test(v)) return v;                  // full URL ok
-    return `${location.origin}${v.startsWith("/")?v:`/${v}`}`; // path → absolute
-  }
+    <form id="loginForm">
+      <div class="field">
+        <label class="label" for="email">อีเมล</label>
+        <div class="input-wrap">
+          <input id="email" type="email" placeholder="name@example.com" autocomplete="email" required />
+        </div>
+      </div>
 
-  // toggle password
-  document.getElementById("toggle").addEventListener("click", () => {
-    const isPwd = passEl.type === "password";
-    passEl.type = isPwd ? "text" : "password";
-    document.getElementById("toggle").textContent = isPwd ? "HIDE" : "SHOW";
-  });
+      <div class="field">
+        <label class="label" for="password">รหัสผ่าน</label>
+        <div class="input-wrap">
+          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+          <span id="toggle" class="show-toggle">SHOW</span>
+        </div>
+      </div>
 
-  // remember email
-  (function initRemember(){
-    const saved = localStorage.getItem("ss_email");
-    if(saved){ emailEl.value = saved; rememberEl.checked = true; }
-  })();
+      <div class="row">
+        <label class="checkbox">
+          <input id="remember" type="checkbox" /> Remember me
+        </label>
+        <a id="forgot" href="#">Forgot Password?</a>
+      </div>
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    msg.style.color = "#0f172a";
-    msg.textContent = "กำลังเข้าสู่ระบบ...";
-    try {
-      const email = emailEl.value.trim();
-      const password = passEl.value;
-      if(rememberEl.checked) localStorage.setItem("ss_email", email);
-      else localStorage.removeItem("ss_email");
+      <button type="submit">Sign in</button>
+      <div id="msg" role="status" aria-live="polite"></div>
+    </form>
 
-      // sign in
-      const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
-      if (signErr) { fail(`เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`); log(signErr); return; }
+    <div class="foot">
+      ยังไม่มีบัญชี? <a href="./signup.html">Sign Up</a>
+    </div>
+  </div>
 
-      // current user
-      const { data: { user }, error: uErr } = await supabase.auth.getUser();
-      if (uErr || !user){ fail("ไม่พบข้อมูลผู้ใช้หลังเข้าสู่ระบบ"); log(uErr); return; }
-      log("user", user.id, user.email);
+  <script>
+    // ---------- CONFIG ----------
+    const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9zZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
 
-      // profiles by id → fallback by email
-      let { data: profile, error: pErr1 } = await supabase
-        .from("profiles")
-        .select("is_admin,email")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!profile) {
-        const { data: p2, error: pErr2 } = await supabase
-          .from("profiles")
-          .select("is_admin")
-          .eq("email", user.email)  // << ใช้คอลัมน์ email
-          .maybeSingle();
-        if (pErr2) log("profiles by email error", pErr2);
-        profile = p2 || null;
-      }
-
-      const isAdmin = !!profile?.is_admin;
-      log("isAdmin =", isAdmin, "profile =", profile);
-
-      // build destination
-      const qp = new URLSearchParams(location.search);
-      const nextParam = qp.get("next");   // URLSearchParams จะ decode ให้อยู่แล้ว
-      const fallback  = isAdmin ? "/admin.html" : "/index.html?login=1";
-      const finalUrl  = resolveNext(nextParam, fallback);
-      log("redirect →", finalUrl);
-
-      ok(isAdmin ? "เข้าสู่ระบบสำเร็จ (แอดมิน) กำลังเปลี่ยนหน้า..." : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...");
-
-      // robust redirect (หลายชั้นกัน fail)
-      try { location.replace(finalUrl); } catch {}
-      setTimeout(() => { try { window.location.assign(finalUrl); } catch {} }, 200);
-      setTimeout(() => { window.location.href = finalUrl; }, 600);
-
-    } catch (err) {
-      log("fatal", err);
-      fail("เกิดข้อผิดพลาดที่ไม่คาดคิด ลองใหม่อีกครั้ง");
+    // ---------- SAFETY GUARD ----------
+    if (!window.supabase || !window.supabase.createClient) {
+      alert("โหลดไลบรารี Supabase ไม่สำเร็จ กรุณากด Ctrl+F5 เพื่อรีโหลดหน้าใหม่");
+      // ถ้าจะหยุดทำงานทันทีให้ return; ได้
     }
-  });
 
-  // forgot password
-  document.getElementById("forgot").addEventListener("click", async (e) => {
-    e.preventDefault();
-    const email = emailEl.value.trim();
-    if (!email) { fail("กรุณากรอกอีเมลก่อน"); return; }
-    const redirectTo = `${location.origin}/reset.html`;
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-    if (error) fail(`ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`);
-    else ok("ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว");
-  });
-</script>
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+
+    const form = document.getElementById("loginForm");
+    const emailEl = document.getElementById("email");
+    const passEl  = document.getElementById("password");
+    const rememberEl = document.getElementById("remember");
+    const msg = document.getElementById("msg");
+
+    // toggle password
+    document.getElementById("toggle").addEventListener("click", () => {
+      const isPwd = passEl.type === "password";
+      passEl.type = isPwd ? "text" : "password";
+      document.getElementById("toggle").textContent = isPwd ? "HIDE" : "SHOW";
+      passEl.focus();
+    });
+
+    // remember email
+    (function initRemember(){
+      const saved = localStorage.getItem("ss_email");
+      if(saved){ emailEl.value = saved; rememberEl.checked = true; }
+    })();
+
+    // สร้าง URL ปลายทางอย่างปลอดภัย
+    function resolveNext(next, fallback){
+      const v = next || fallback || "/index.html";
+      if (/^https?:\/\//i.test(v)) return v;  // เป็น URL เต็ม
+      return `${location.origin}${v.startsWith("/") ? v : `/${v}`}`;
+    }
+
+    // login flow + ตรวจแอดมิน
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.style.color = "#0f172a";
+      msg.textContent = "กำลังเข้าสู่ระบบ...";
+
+      try {
+        const email = emailEl.value.trim();
+        const password = passEl.value;
+        if(rememberEl.checked) localStorage.setItem("ss_email", email);
+        else localStorage.removeItem("ss_email");
+
+        const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (signErr) { msg.style.color="crimson"; msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`; return; }
+
+        // current user
+        const { data: { user }, error: uErr } = await supabase.auth.getUser();
+        if(uErr || !user){ msg.style.color="crimson"; msg.textContent="ไม่พบข้อมูลผู้ใช้หลังเข้าสู่ระบบ"; return; }
+
+        // โปรไฟล์: เช็ค is_admin (ลองด้วย id ก่อน แล้ว fallback ด้วย email)
+        let { data: profile } = await supabase
+          .from("profiles")
+          .select("is_admin,email")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (!profile) {
+          const { data: p2 } = await supabase
+            .from("profiles").select("is_admin").eq("email", user.email).maybeSingle();
+          profile = p2 || null;
+        }
+
+        const isAdmin = !!profile?.is_admin;
+
+        // ปลายทาง
+        const nextParam = new URLSearchParams(location.search).get("next");
+        const fallback  = isAdmin ? "/admin.html" : "/index.html?login=1";
+        const finalUrl  = resolveNext(nextParam, fallback);
+
+        msg.style.color = "seagreen";
+        msg.textContent = isAdmin ? "เข้าสู่ระบบสำเร็จ (แอดมิน) กำลังเปลี่ยนหน้า..." : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
+
+        // redirect อย่างมั่นคง
+        try { location.replace(finalUrl); } catch {}
+        setTimeout(() => { try { window.location.assign(finalUrl); } catch {} }, 200);
+        setTimeout(() => { window.location.href = finalUrl; }, 600);
+
+      } catch (err) {
+        console.error("[signin fatal]", err);
+        msg.style.color="crimson";
+        msg.textContent = "เกิดข้อผิดพลาดที่ไม่คาดคิด ลองใหม่อีกครั้ง";
+      }
+    });
+
+    // forgot password
+    document.getElementById("forgot").addEventListener("click", async (e) => {
+      e.preventDefault();
+      const email = emailEl.value.trim();
+      if (!email) { msg.style.color = "crimson"; msg.textContent = "กรุณากรอกอีเมลก่อน"; return; }
+      const redirectTo = `${location.origin}/reset.html`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) { msg.style.color="crimson"; msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`; }
+      else { msg.style.color="seagreen"; msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว"; }
+    });
+  </script>
+</body>
+</html>
