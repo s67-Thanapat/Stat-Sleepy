@@ -33,17 +33,16 @@
   </style>
 </head>
 <body>
-<header>
-  แอดมิน • จัดการข้อมูล
-</header>
+<header>แอดมิน • จัดการข้อมูล</header>
 
-<div class="wrap">
+<!-- ซ่อนแอปทั้งหมดไว้ก่อน จนกว่าจะผ่านการตรวจสิทธิ์ -->
+<div id="app" class="wrap" style="display:none">
   <!-- กล่องสถานะผู้ใช้ -->
   <div class="card" id="whoCard">
     <div class="row" style="align-items:center">
       <div>
-        <div id="who">กำลังตรวจสอบ session...</div>
-        <div class="muted">หากไม่มีการเข้าสู่ระบบ จะส่งกลับไปหน้า login</div>
+        <div id="who">กำลังตรวจสอบสิทธิ์...</div>
+        <div class="muted">เฉพาะผู้ดูแลระบบเท่านั้นที่เข้าหน้านี้ได้</div>
       </div>
       <div class="right">
         <button id="logoutBtn" class="btn-red">Logout</button>
@@ -109,10 +108,9 @@
 </div>
 
 <script>
-  // ⬇️ ใส่ค่าจริงของโปรเจกต์คุณ
+  // ⬇️ ใช้คีย์โปรเจกต์จริงของคุณ
   const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
-
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let user = null;
@@ -120,18 +118,36 @@
   const pageSize = 10;
   let total = 0;
 
+  const appEl = document.getElementById('app');
   const whoEl = document.getElementById('who');
   const logoutBtn = document.getElementById('logoutBtn');
 
-  // ===== Session check =====
-  async function requireLogin() {
+  // ===== บังคับสิทธิ์: ต้องล็อกอิน และต้อง is_admin = true =====
+  async function requireAdmin() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
+      // ยังไม่ได้ล็อกอิน → ส่งไปหน้าเข้าสู่ระบบ แล้วกลับมาหน้านี้
       location.href = "login.html?next=admin.html";
       return;
     }
     user = session.user;
-    whoEl.innerHTML = `เข้าสู่ระบบด้วย: <b>${user.email}</b>`;
+
+    // อ่านโปรไฟล์ของตัวเอง (ต้องมีตาราง profiles และ RLS อนุญาต select ของตัวเอง)
+    const { data: profile, error: pErr } = await supabase
+      .from('profiles')
+      .select('is_admin,email')
+      .eq('id', user.id)
+      .single();
+
+    // ถ้าอ่านโปรไฟล์ไม่ได้ หรือไม่ใช่แอดมิน → กลับหน้าแรก
+    if (pErr || !profile?.is_admin) {
+      location.href = "index.html?login=1";
+      return;
+    }
+
+    // ผ่านสิทธิ์ → แสดงแอปและโหลดข้อมูล
+    appEl.style.display = 'block';
+    whoEl.innerHTML = `เข้าสู่ระบบด้วย: <b>${user.email}</b> <span class="ok">• Admin</span>`;
     await loadProfile();
     await loadSessions();
   }
@@ -150,7 +166,7 @@
       .eq('id', user.id)
       .single();
 
-    if (error && error.code !== 'PGRST116') { // not found
+    if (error && error.code !== 'PGRST116') {
       profileMsg.textContent = "โหลดโปรไฟล์ไม่สำเร็จ: " + error.message;
       return;
     }
@@ -186,7 +202,7 @@
     const from = (page-1)*pageSize;
     const to   = from + pageSize - 1;
 
-    // เลือกเฉพาะของผู้ใช้ปัจจุบัน (ปรับตาม RLS ของคุณ)
+    // ตอนนี้ยังแสดงเฉพาะข้อมูลของผู้ใช้ปัจจุบัน (Admin เอง)
     const { data, error, count } = await supabase
       .from('sleep_sessions')
       .select('id,start_time,end_time,duration_minutes,sleep_quality,note', { count: 'exact' })
@@ -226,7 +242,6 @@
     }
   }
 
-  // เพิ่มรายการ
   document.getElementById('addSession').onclick = async () => {
     addMsg.textContent = "กำลังเพิ่ม...";
     const payload = {
@@ -237,7 +252,6 @@
       note: emptyNull(document.getElementById('note').value),
       source: 'admin',
     };
-    // ตรวจสอบเวลา
     if (!payload.start_time || !payload.end_time) {
       addMsg.textContent = "กรุณาใส่เวลาเริ่ม/จบ"; return;
     }
@@ -246,7 +260,6 @@
     else { addMsg.textContent = "เพิ่มแล้ว ✓"; clearAddInputs(); await loadSessions(); }
   };
 
-  // แก้ไข/ลบ (event delegation)
   tbody.addEventListener('click', async (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
@@ -272,7 +285,6 @@
     }
   });
 
-  // หน้า
   document.getElementById('prev').onclick = () => { if (page>1){ page--; loadSessions(); } };
   document.getElementById('next').onclick = () => {
     const last = Math.max(1, Math.ceil(total/pageSize));
@@ -285,15 +297,13 @@
     const obj = {};
     tr.querySelectorAll('input').forEach(i => obj[i.dataset.k] = i.value);
     return obj;
-    }
+  }
   function toLocalInput(iso){
-    // iso → "YYYY-MM-DDThh:mm"
     const d = new Date(iso);
     const pad = n => String(n).padStart(2,'0');
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
   function fromLocalInput(localStr){
-    // "YYYY-MM-DDThh:mm" (local) → ISO string
     if(!localStr) return null;
     const d = new Date(localStr);
     return d.toISOString();
@@ -305,8 +315,8 @@
     ['start_time','end_time','sleep_quality','note'].forEach(id=>document.getElementById(id).value='');
   }
 
-  // start
-  requireLogin();
+  // เริ่มต้น: ตรวจสิทธิ์แอดมิน
+  requireAdmin();
 </script>
 </body>
 </html>
