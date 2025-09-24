@@ -29,7 +29,6 @@
     .pill{padding:4px 8px;border-radius:999px;background:#eef2ff;font-weight:600}
     .danger{color:var(--red)}
     .ok{color:var(--green)}
-    .hidden{display:none}
   </style>
 </head>
 <body>
@@ -110,8 +109,12 @@
 <script>
   // ⬇️ ใช้คีย์โปรเจกต์จริงของคุณ
   const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9zZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
 
   let user = null;
   let page = 1;
@@ -124,37 +127,38 @@
 
   // ===== บังคับสิทธิ์: ต้องล็อกอิน และต้อง is_admin = true =====
   async function requireAdmin() {
+    // 1) ต้องมี session
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      // ยังไม่ได้ล็อกอิน → ส่งไปหน้าเข้าสู่ระบบ แล้วกลับมาหน้านี้
-      location.href = "login.html?next=admin.html";
+      location.href = "/pages/signin.html?next=/admin.html";
       return;
     }
     user = session.user;
 
-    // อ่านโปรไฟล์ของตัวเอง (ต้องมีตาราง profiles และ RLS อนุญาต select ของตัวเอง)
+    // 2) อ่านสิทธิ์จาก profiles (ของตัวเอง)
     const { data: profile, error: pErr } = await supabase
       .from('profiles')
-      .select('is_admin,email')
+      .select('is_admin')
       .eq('id', user.id)
-      .single();
+      .maybeSingle(); // กันกรณีไม่มีแถว
 
-    // ถ้าอ่านโปรไฟล์ไม่ได้ หรือไม่ใช่แอดมิน → กลับหน้าแรก
     if (pErr || !profile?.is_admin) {
-      location.href = "index.html?login=1";
+      // ไม่ใช่แอดมิน → กลับหน้าแรก
+      location.href = "/index.html?login=1";
       return;
     }
 
-    // ผ่านสิทธิ์ → แสดงแอปและโหลดข้อมูล
+    // 3) ผ่านสิทธิ์ → แสดงแอปและโหลดข้อมูล
     appEl.style.display = 'block';
     whoEl.innerHTML = `เข้าสู่ระบบด้วย: <b>${user.email}</b> <span class="ok">• Admin</span>`;
     await loadProfile();
     await loadSessions();
   }
 
+  // Logout
   logoutBtn.onclick = async () => {
     await supabase.auth.signOut();
-    location.href = "login.html";
+    location.href = "/pages/signin.html";
   };
 
   // ===== Profiles CRUD (upsert ค่าของผู้ใช้ปัจจุบัน) =====
@@ -164,13 +168,12 @@
       .from('profiles')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
       profileMsg.textContent = "โหลดโปรไฟล์ไม่สำเร็จ: " + error.message;
       return;
     }
-
     const p = data || {};
     document.getElementById('display_name').value = p.display_name || '';
     document.getElementById('height_cm').value  = p.height_cm ?? '';
@@ -202,7 +205,8 @@
     const from = (page-1)*pageSize;
     const to   = from + pageSize - 1;
 
-    // ตอนนี้ยังแสดงเฉพาะข้อมูลของผู้ใช้ปัจจุบัน (Admin เอง)
+    // ตัวอย่าง: แสดงเฉพาะของผู้ใช้ปัจจุบัน (แอดมินเอง)
+    // ถ้าต้องการเห็นทั้งหมดให้เอา .eq('user_id', user.id) ออก และต้องมี RLS นโยบายสำหรับ admin
     const { data, error, count } = await supabase
       .from('sleep_sessions')
       .select('id,start_time,end_time,duration_minutes,sleep_quality,note', { count: 'exact' })
@@ -242,6 +246,7 @@
     }
   }
 
+  // เพิ่มรายการ
   document.getElementById('addSession').onclick = async () => {
     addMsg.textContent = "กำลังเพิ่ม...";
     const payload = {
@@ -260,6 +265,7 @@
     else { addMsg.textContent = "เพิ่มแล้ว ✓"; clearAddInputs(); await loadSessions(); }
   };
 
+  // แก้ไข/ลบ
   tbody.addEventListener('click', async (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
