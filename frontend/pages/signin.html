@@ -72,7 +72,7 @@
   <script>
     // ⭐ โปรเจกต์ของคุณ
     const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9zZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
@@ -96,6 +96,15 @@
       const saved = localStorage.getItem("ss_email");
       if(saved){ emailEl.value = saved; rememberEl.checked = true; }
     })();
+
+    // ตัวช่วย: แปลงค่าปลายทางให้ปลอดภัย (รองรับทั้ง URL เต็มและ path)
+    function resolveNext(next, fallback){
+      const value = next || fallback || "/index.html";
+      // เป็น URL เต็มอยู่แล้ว (http/https) → ใช้เลย
+      if (/^https?:\/\//i.test(value)) return value;
+      // เป็น path → เติม origin ให้สมบูรณ์
+      return `${location.origin}${value.startsWith("/") ? value : `/${value}`}`;
+    }
 
     // 🔐 Login + ตรวจสิทธิ์แอดมิน
     form.addEventListener("submit", async (e) => {
@@ -125,7 +134,7 @@
       }
 
       // อ่านสิทธิ์จาก profiles.is_admin (ใช้ maybeSingle กันกรณียังไม่มีแถว)
-      const { data: profile, error: pErr } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
         .select("is_admin")
         .eq("id", user.id)
@@ -136,11 +145,11 @@
       // ปลายทาง: เคารพ ?next= ก่อน ถ้าไม่มีค่อย fallback ตามสิทธิ์
       const nextParam = new URLSearchParams(location.search).get("next");
       const fallback = isAdmin ? "/admin.html" : "/index.html?login=1";
-      const next = nextParam || fallback;
+      const finalUrl = resolveNext(nextParam, fallback);
 
       msg.style.color = "seagreen";
       msg.textContent = isAdmin ? "เข้าสู่ระบบสำเร็จ (แอดมิน) กำลังเปลี่ยนหน้า..." : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
-      location.href = `${location.origin}${next}`;
+      location.href = finalUrl; // ✅ ไม่มีการต่อ origin ซ้ำ
     });
 
     // ลืมรหัสผ่าน
