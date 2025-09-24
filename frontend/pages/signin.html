@@ -1,173 +1,108 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sign in</title>
+<script>
+  // ⭐ โปรเจกต์ของคุณ
+  const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
 
-  <style>
-    :root{--bg1:#0b5bd3;--bg2:#23a6ff;--text:#0f172a;--muted:#6b7280;--border:#e5e7eb;--primary:#2563eb;--primary-2:#1e40af;--card:#ffffff}
-    *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);
-      background:radial-gradient(1200px 600px at 15% -10%,#ffffff66,transparent),linear-gradient(120deg,var(--bg1),var(--bg2));
-      display:grid;place-items:center;padding:24px}
-    .card{width:min(92vw,380px);background:var(--card);border:1px solid #e6e9f3;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:24px 24px 18px}
-    h1{margin:0 0 4px;font-weight:800;letter-spacing:.3px;text-align:center}
-    .sub{color:var(--muted);margin:0 0 18px;font-size:.95rem;text-align:center}
-    .field{margin:10px 0 12px}
-    .label{display:block;font-size:.9rem;color:var(--muted);margin:0 0 6px}
-    .input-wrap{position:relative;border:1px solid var(--border);border-radius:10px;background:#fff;display:flex;align-items:center}
-    input{width:100%;border:0;outline:none;background:transparent;padding:12px 14px;font:inherit;color:inherit}
-    .show-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.9rem;color:var(--primary);cursor:pointer;user-select:none}
-    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 10px;font-size:.9rem}
-    .row a{color:var(--primary);text-decoration:none}.row a:hover{text-decoration:underline}
-    .checkbox{display:flex;align-items:center;gap:8px;user-select:none}
-    .checkbox input{accent-color:var(--primary)}
-    button{width:100%;border:0;outline:0;cursor:pointer;background:var(--primary);color:#fff;font-weight:700;border-radius:12px;padding:12px 14px;margin-top:6px;box-shadow:0 6px 18px rgba(37,99,235,.35)}
-    button:hover{background:var(--primary-2)}
-    #msg{margin-top:10px;font-size:.92rem}
-    .foot{margin-top:12px;text-align:center;color:var(--muted);font-size:.92rem}
-    .foot a{color:var(--primary);text-decoration:none}.foot a:hover{text-decoration:underline}
-  </style>
+  const form = document.getElementById("loginForm");
+  const emailEl = document.getElementById("email");
+  const passEl = document.getElementById("password");
+  const rememberEl = document.getElementById("remember");
+  const msg = document.getElementById("msg");
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
-  <div class="card">
-    <h1>Sign in</h1>
-    <p class="sub">เข้าสู่ระบบเพื่อใช้งานแดชบอร์ดของคุณ</p>
+  // SHOW/HIDE password
+  document.getElementById("toggle").addEventListener("click", () => {
+    const isPwd = passEl.type === "password";
+    passEl.type = isPwd ? "text" : "password";
+    document.getElementById("toggle").textContent = isPwd ? "HIDE" : "SHOW";
+    passEl.focus();
+  });
 
-    <form id="loginForm">
-      <div class="field">
-        <label class="label" for="email">อีเมล</label>
-        <div class="input-wrap">
-          <input id="email" type="email" placeholder="name@example.com" autocomplete="email" required />
-        </div>
-      </div>
+  // เติมอีเมลที่เคยจำไว้
+  (function initRemember(){
+    const saved = localStorage.getItem("ss_email");
+    if(saved){ emailEl.value = saved; rememberEl.checked = true; }
+  })();
 
-      <div class="field">
-        <label class="label" for="password">รหัสผ่าน</label>
-        <div class="input-wrap">
-          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
-          <span id="toggle" class="show-toggle">SHOW</span>
-        </div>
-      </div>
+  // ตัวช่วย: resolve URL
+  function resolveNext(next, fallback){
+    const value = next || fallback || "/index.html";
+    if (/^https?:\/\//i.test(value)) return value;
+    return `${location.origin}${value.startsWith("/") ? value : `/${value}`}`;
+  }
 
-      <div class="row">
-        <label class="checkbox">
-          <input id="remember" type="checkbox" /> Remember me
-        </label>
-        <a id="forgot" href="#">Forgot Password?</a>
-      </div>
+  // 🔐 Login + ตรวจสิทธิ์แอดมิน
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    msg.style.color = "#0f172a";
+    msg.textContent = "กำลังเข้าสู่ระบบ...";
 
-      <button type="submit">Sign in</button>
-      <div id="msg" role="status" aria-live="polite"></div>
-    </form>
+    const email = emailEl.value.trim();
+    const password = passEl.value;
 
-    <div class="foot">
-      ยังไม่มีบัญชี? <a href="./signup.html">Sign Up</a>
-    </div>
-  </div>
+    if(rememberEl.checked) localStorage.setItem("ss_email", email);
+    else localStorage.removeItem("ss_email");
 
-  <script>
-    // ⭐ โปรเจกต์ของคุณ
-    const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    });
-
-    const form = document.getElementById("loginForm");
-    const emailEl = document.getElementById("email");
-    const passEl = document.getElementById("password");
-    const rememberEl = document.getElementById("remember");
-    const msg = document.getElementById("msg");
-
-    // SHOW/HIDE password
-    document.getElementById("toggle").addEventListener("click", () => {
-      const isPwd = passEl.type === "password";
-      passEl.type = isPwd ? "text" : "password";
-      document.getElementById("toggle").textContent = isPwd ? "HIDE" : "SHOW";
-      passEl.focus();
-    });
-
-    // เติมอีเมลที่เคยจำไว้
-    (function initRemember(){
-      const saved = localStorage.getItem("ss_email");
-      if(saved){ emailEl.value = saved; rememberEl.checked = true; }
-    })();
-
-    // ตัวช่วย: แปลงค่าปลายทางให้ปลอดภัย (รองรับทั้ง URL เต็มและ path)
-    function resolveNext(next, fallback){
-      const value = next || fallback || "/index.html";
-      // เป็น URL เต็มอยู่แล้ว (http/https) → ใช้เลย
-      if (/^https?:\/\//i.test(value)) return value;
-      // เป็น path → เติม origin ให้สมบูรณ์
-      return `${location.origin}${value.startsWith("/") ? value : `/${value}`}`;
+    const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+    if (signErr) {
+      msg.style.color = "crimson";
+      msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`;
+      return;
     }
 
-    // 🔐 Login + ตรวจสิทธิ์แอดมิน
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      msg.style.color = "#0f172a";
-      msg.textContent = "กำลังเข้าสู่ระบบ...";
+    // ดึง user ปัจจุบัน
+    const { data: { user }, error: uErr } = await supabase.auth.getUser();
+    if(uErr || !user){
+      msg.style.color = "crimson";
+      msg.textContent = "ไม่พบข้อมูลผู้ใช้หลังเข้าสู่ระบบ";
+      return;
+    }
 
-      const email = emailEl.value.trim();
-      const password = passEl.value;
+    // 🔎 1) หาโดย id ก่อน
+    let { data: profile } = await supabase
+      .from("profiles")
+      .select("is_admin, display_name")
+      .eq("id", user.id)
+      .maybeSingle();
 
-      if(rememberEl.checked) localStorage.setItem("ss_email", email);
-      else localStorage.removeItem("ss_email");
-
-      const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
-      if (signErr) {
-        msg.style.color = "crimson";
-        msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`;
-        return;
-      }
-
-      // ดึง user ปัจจุบัน
-      const { data: { user }, error: uErr } = await supabase.auth.getUser();
-      if(uErr || !user){
-        msg.style.color = "crimson";
-        msg.textContent = "ไม่พบข้อมูลผู้ใช้หลังเข้าสู่ระบบ";
-        return;
-      }
-
-      // อ่านสิทธิ์จาก profiles.is_admin (ใช้ maybeSingle กันกรณียังไม่มีแถว)
-      const { data: profile } = await supabase
+    // 🔎 2) ถ้าไม่เจอ → หาโดยอีเมล (เผื่อเก็บใน display_name แทน)
+    if (!profile) {
+      const { data: p2 } = await supabase
         .from("profiles")
         .select("is_admin")
-        .eq("id", user.id)
+        .eq("display_name", user.email)   // 👈 หรือเปลี่ยนเป็น .eq("email", user.email) ถ้ามีคอลัมน์ email
         .maybeSingle();
+      profile = p2 || null;
+    }
 
-      const isAdmin = !!profile?.is_admin;
+    const isAdmin = !!profile?.is_admin;
 
-      // ปลายทาง: เคารพ ?next= ก่อน ถ้าไม่มีค่อย fallback ตามสิทธิ์
-      const nextParam = new URLSearchParams(location.search).get("next");
-      const fallback = isAdmin ? "/admin.html" : "/index.html?login=1";
-      const finalUrl = resolveNext(nextParam, fallback);
+    // ปลายทาง: เคารพ ?next= ก่อน ถ้าไม่มีค่อย fallback ตามสิทธิ์
+    const nextParam = new URLSearchParams(location.search).get("next");
+    const fallback = isAdmin ? "/admin.html" : "/index.html?login=1";
+    const finalUrl = resolveNext(nextParam, fallback);
 
+    msg.style.color = "seagreen";
+    msg.textContent = isAdmin ? "เข้าสู่ระบบสำเร็จ (แอดมิน) กำลังเปลี่ยนหน้า..." : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
+    location.href = finalUrl;
+  });
+
+  // ลืมรหัสผ่าน
+  document.getElementById("forgot").addEventListener("click", async (e) => {
+    e.preventDefault();
+    const email = emailEl.value.trim();
+    if (!email) { msg.style.color = "crimson"; msg.textContent = "กรุณากรอกอีเมลก่อน"; return; }
+
+    const redirectTo = `${location.origin}/reset.html`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) {
+      msg.style.color = "crimson";
+      msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`;
+    } else {
       msg.style.color = "seagreen";
-      msg.textContent = isAdmin ? "เข้าสู่ระบบสำเร็จ (แอดมิน) กำลังเปลี่ยนหน้า..." : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
-      location.href = finalUrl; // ✅ ไม่มีการต่อ origin ซ้ำ
-    });
-
-    // ลืมรหัสผ่าน
-    document.getElementById("forgot").addEventListener("click", async (e) => {
-      e.preventDefault();
-      const email = emailEl.value.trim();
-      if (!email) { msg.style.color = "crimson"; msg.textContent = "กรุณากรอกอีเมลก่อน"; return; }
-
-      const redirectTo = `${location.origin}/reset.html`; // โปรดสร้าง reset.html
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-      if (error) {
-        msg.style.color = "crimson";
-        msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`;
-      } else {
-        msg.style.color = "seagreen";
-        msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว";
-      }
-    });
-  </script>
-</body>
-</html>
+      msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว";
+    }
+  });
+</script>
