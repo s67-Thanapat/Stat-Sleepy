@@ -154,3 +154,80 @@ function numOrNull(v) {
   const n = Number(v); 
   return Number.isFinite(n) ? n : null;
 }
+// ===== Query helpers for stats/dashboard =====
+
+// ดึงรายการบันทึกการนอนทั้งหมด หรือเฉพาะช่วง N วันล่าสุด
+async function fetchAllSessions({ days = null, order = "start_time.desc", limit = null, offset = 0 } = {}) {
+  let url = `${SUPABASE_URL}/rest/v1/sleep_sessions?select=*&order=${encodeURIComponent(order)}`;
+
+  // กรองช่วงเวลา (N วันย้อนหลัง) ถ้าระบุ days
+  if (days && Number.isFinite(days)) {
+    const since = new Date();
+    since.setDate(since.getDate() - Number(days));
+    url += `&start_time=gte.${since.toISOString()}`;
+  }
+
+  if (limit && Number.isFinite(limit)) url += `&limit=${limit}`;
+  if (offset && Number.isFinite(offset)) url += `&offset=${offset}`;
+
+  const res = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+  });
+
+  if (!res.ok) throw new Error(`REST ${res.status} ${await res.text()}`);
+  return res.json(); // array ของ session objects
+}
+
+// คำนวณสถิติเบื้องต้นจากแถวที่ดึงมา
+function computeSleepStats(sessions) {
+  if (!Array.isArray(sessions) || sessions.length === 0) {
+    return {
+      nights: 0,
+      total_hours: 0,
+      avg_hours_per_night: 0,
+      avg_quality: null,
+    };
+  }
+
+  let totalHours = 0;
+  let qualitySum = 0;
+  let qualityCount = 0;
+
+  for (const s of sessions) {
+    const st = s.start_time ? new Date(s.start_time) : null;
+    const et = s.end_time ? new Date(s.end_time) : null;
+    if (st && et && et > st) {
+      totalHours += (et - st) / (1000 * 60 * 60);
+    }
+    if (typeof s.sleep_quality === "number") {
+      qualitySum += s.sleep_quality;
+      qualityCount += 1;
+    }
+  }
+
+  const nights = sessions.length;
+  const avgHours = nights ? totalHours / nights : 0;
+  const avgQuality = qualityCount ? Math.round((qualitySum / qualityCount) * 10) / 10 : null;
+
+  return {
+    nights,
+    total_hours: Math.round(totalHours * 10) / 10,
+    avg_hours_per_night: Math.round(avgHours * 10) / 10,
+    avg_quality: avgQuality, // 0..100 หรือ null
+  };
+}
+
+// ดึง + คำนวณสถิติช่วง N วัน (เช่น 7, 30, 90) หรือทั้งหมด (ไม่ส่ง days)
+async function fetchRangeStats(days = null) {
+  const sessions = await fetchAllSessions({ days });
+  const stats = computeSleepStats(sessions);
+  return { sessions, stats };
+}
+
+// (ถ้าต้องการให้เรียกใช้จากสคริปต์อื่นแบบชัวร์ ๆ)
+window.fetchAllSessions = fetchAllSessions;
+window.computeSleepStats = computeSleepStats;
+window.fetchRangeStats = fetchRangeStats;
