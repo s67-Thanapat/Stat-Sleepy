@@ -86,7 +86,7 @@ File: /index.html (หน้า Main)
 
         <!-- auth area -->
         <span id="authUser"></span>
-        <a id="btnLogin"  class="btn btn-primary" href="./pages/signin.html?next=/admin.html">เข้าสู่ระบบ</a>
+        <a id="btnLogin"  class="btn btn-primary" href="./pages/signin.html">เข้าสู่ระบบ</a>
         <a id="btnLogout" class="btn" style="display:none" href="javascript:void(0)">ออกจากระบบ</a>
       </nav>
     </div>
@@ -124,88 +124,111 @@ File: /index.html (หน้า Main)
   </footer>
 
   <!-- Supabase & Auth Status -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9zZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
 
-  // ✅ ระบุ options ให้แน่ใจว่า session ถูกเก็บ/รีเฟรช
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      storage: window.localStorage
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: window.localStorage
+      }
+    });
+
+    const authUser = document.getElementById('authUser');
+    const btnLogin  = document.getElementById('btnLogin');
+    const btnLogout = document.getElementById('btnLogout');
+
+    // ปรับลิงก์เข้าสู่ระบบให้กลับมายัง origin เดิมเสมอ
+    (function setLoginNext(){
+      const next = `${location.origin}/index.html?login=1`;
+      const url  = new URL(btnLogin.getAttribute('href'), location.origin);
+      url.searchParams.set('next', next);
+      btnLogin.setAttribute('href', url.pathname + url.search);
+    })();
+
+    function avatar(email){
+      const ch = (email||'?').trim()[0]?.toUpperCase() || '?';
+      return `<span class="avatar">${ch}</span>`;
     }
-  });
+    function showLoggedIn(email){
+      authUser.innerHTML = `${avatar(email)}<span>${email}</span>`;
+      btnLogin.style.display  = 'none';
+      btnLogout.style.display = 'inline-block';
+    }
+    function showLoggedOut(){
+      authUser.innerHTML = '';
+      btnLogin.style.display  = 'inline-block';
+      btnLogout.style.display = 'none';
+    }
 
-  const authUser = document.getElementById('authUser');
-  const btnLogin  = document.getElementById('btnLogin');
-  const btnLogout = document.getElementById('btnLogout');
+    // fallback อ่าน session จาก localStorage (กันเคส hydrate ไม่ทัน)
+    function readSessionFromLocalStorage(){
+      try{
+        const ref = SUPABASE_URL.match(/https:\/\/(.*?)\.supabase\.co/)?.[1];
+        const key = `sb-${ref}-auth-token`;
+        const raw = localStorage.getItem(key);
+        if(!raw) return null;
+        const parsed = JSON.parse(raw);
+        const email =
+          parsed?.currentSession?.user?.email ||
+          parsed?.user?.email ||
+          null;
+        return email;
+      }catch{ return null; }
+    }
 
-  function avatar(email){
-    const ch = (email||'?').trim()[0]?.toUpperCase() || '?';
-    return `<span class="avatar">${ch}</span>`;
-  }
-
-  function showLoggedIn(email){
-    authUser.innerHTML = `${avatar(email)}<span>${email}</span>`;
-    btnLogin.style.display  = 'none';
-    btnLogout.style.display = 'inline-block';
-  }
-  function showLoggedOut(){
-    authUser.innerHTML = '';
-    btnLogin.style.display  = 'inline-block';
-    btnLogout.style.display = 'none';
-  }
-
-  async function renderAuth(initial=false){
-    try {
-      // 1) ลองจาก getSession ก่อน
+    async function renderAuth(initial=false){
+      // 1) getSession
       let { data: { session } } = await supabase.auth.getSession();
+      console.log('[getSession]', session?.user?.email);
       if (session?.user?.email) { showLoggedIn(session.user.email); return; }
 
-      // 2) บางครั้งหลัง redirect session ยังไม่ hydrate → ลอง getUser()
+      // 2) getUser
       const { data: userRes } = await supabase.auth.getUser();
+      console.log('[getUser]', userRes?.user?.email);
       if (userRes?.user?.email) { showLoggedIn(userRes.user.email); return; }
 
-      // 3) ถ้ายังไม่มี และเป็นครั้งแรก ให้หน่วงสั้นๆ แล้วลองใหม่
-      if (initial) {
-        setTimeout(() => renderAuth(false), 200);
-        return;
-      }
+      // 3) fallback localStorage
+      const email = readSessionFromLocalStorage();
+      console.log('[localStorage]', email);
+      if (email) { showLoggedIn(email); return; }
 
-      // ไม่พบผู้ใช้
-      showLoggedOut();
-    } catch (e) {
-      console.warn("auth render error:", e);
+      // 4) ลองหน่วงสั้น ๆ ครั้งเดียวหลัง redirect
+      if (initial) { setTimeout(() => renderAuth(false), 250); return; }
+
       showLoggedOut();
     }
-  }
 
-  // เริ่มเช็ค (ครั้งแรกใช้โหมด initial)
-  renderAuth(true);
+    // เริ่มตรวจ
+    renderAuth(true);
 
-  // ฟังเหตุการณ์เปลี่ยนสถานะ (login/logout/refresh)
-  supabase.auth.onAuthStateChange((_event, session) => {
-    if (session?.user?.email) showLoggedIn(session.user.email);
-    else showLoggedOut();
-  });
-
-  // ออกจากระบบ → กลับหน้าแรก (origin เดียวกัน)
-  btnLogout?.addEventListener('click', async ()=>{
-    await supabase.auth.signOut();
-    location.href = `${location.origin}/index.html`;
-  });
-
-  // toggle เมนูบนมือถือ
-  (function () {
-    const btn = document.getElementById('hamburger');
-    const menu = document.getElementById('menu');
-    if (!btn || !menu) return;
-    btn.addEventListener('click', () => {
-      const open = menu.classList.toggle('open');
-      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    // ฟัง event เปลี่ยนสถานะ
+    supabase.auth.onAuthStateChange((_evt, session) => {
+      if (session?.user?.email) showLoggedIn(session.user.email);
+      else showLoggedOut();
     });
-  })();
-</script>
+
+    // ออกจากระบบ
+    btnLogout?.addEventListener('click', async ()=>{
+      await supabase.auth.signOut();
+      location.href = `${location.origin}/index.html`;
+    });
+
+    // toggle เมนูบนมือถือ
+    (function () {
+      const btn = document.getElementById('hamburger');
+      const menu = document.getElementById('menu');
+      if (!btn || !menu) return;
+      btn.addEventListener('click', () => {
+        const open = menu.classList.toggle('open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    })();
+  </script>
+</body>
+</html>
