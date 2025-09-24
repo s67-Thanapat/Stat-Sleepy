@@ -11,69 +11,45 @@ File: /index.html (หน้า Main)
   <link rel="stylesheet" href="./css/styles.css" />
   <script defer src="./js/main.js"></script>
 
-  <!-- สไตล์เฉพาะสำหรับ Topbar + Main Navbar (ย้ายไป styles.css ได้ภายหลัง) -->
   <style>
     /* TOP BAR */
     .topbar {
       background: linear-gradient(90deg, #0b5bd3, #23a6ff);
-      color: #fff;
-      font-size: 14px;
-      padding: 6px 0;
+      color: #fff; font-size: 14px; padding: 6px 0;
     }
     .topbar .wrap {
       max-width: 1080px; margin: 0 auto; padding: 0 16px;
       display: flex; align-items: center; gap: 12px; justify-content: space-between;
     }
     .tb-left, .tb-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .tb-link {
-      color: #fff; text-decoration: none; display: inline-flex; align-items: center;
-      gap: 6px; padding: 6px 10px; border-radius: 10px;
-    }
-    .tb-link:hover { background: rgba(255, 255, 255, .12); }
-    .tb-search {
-      display: flex; align-items: center; gap: 0; background: #fff; border-radius: 10px;
-      overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.15);
-    }
+    .tb-link { color: #fff; text-decoration: none; display: inline-flex; align-items: center;
+      gap: 6px; padding: 6px 10px; border-radius: 10px; }
+    .tb-link:hover { background: rgba(255,255,255,.12); }
+    .tb-search { display: flex; align-items: center; gap: 0; background: #fff; border-radius: 10px;
+      overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.15); }
     .tb-search input { border: none; outline: none; padding: 8px 12px; min-width: 240px; font-size: 14px; }
     .tb-search button { border: none; background: #0b5bd3; color: #fff; padding: 8px 12px; cursor: pointer; }
 
-    /* MAIN NAVBAR (ใต้ Topbar) */
-    .nav-main {
-      background: #fff; color: #0b0c10; border-bottom: 1px solid rgba(0,0,0,.08);
-      position: sticky; top: 0; z-index: 50;
-    }
-    .nav-inner2 {
-      max-width: 1080px; margin: 0 auto; padding: 10px 16px;
-      display: flex; align-items: center; gap: 16px;
-    }
-    .brand {
-      font-weight: 800; letter-spacing: .2px; color: inherit; text-decoration: none;
-      display: flex; align-items: center; gap: 10px;
-    }
+    /* MAIN NAVBAR */
+    .nav-main { background: #fff; color: #0b0c10; border-bottom: 1px solid rgba(0,0,0,.08);
+      position: sticky; top: 0; z-index: 50; }
+    .nav-inner2 { max-width: 1080px; margin: 0 auto; padding: 10px 16px;
+      display: flex; align-items: center; gap: 16px; }
+    .brand { font-weight: 800; letter-spacing: .2px; color: inherit; text-decoration: none;
+      display: flex; align-items: center; gap: 10px; }
     .brand img { height: 42px; width: auto; display: block; }
-    .menu2 {
-      display: flex; align-items: center; gap: 16px; margin-left: auto; flex-wrap: wrap;
-    }
-    .menu2 a {
-      color: inherit; text-decoration: none; padding: 8px 10px;
-      border-radius: 12px; border: 1px solid transparent;
-    }
+    .menu2 { display: flex; align-items: center; gap: 16px; margin-left: auto; flex-wrap: wrap; }
+    .menu2 a { color: inherit; text-decoration: none; padding: 8px 10px; border-radius: 12px; border: 1px solid transparent; }
     .menu2 a:hover { background: rgba(0,0,0,.04); }
 
-    /* ปุ่มเด่น */
-    .btn {
-      border: 1px solid rgba(0,0,0,.1); background: #f6f7f9;
-      padding: 8px 12px; border-radius: 12px; text-decoration: none;
-    }
+    /* ปุ่ม */
+    .btn { border: 1px solid rgba(0,0,0,.1); background: #f6f7f9; padding: 8px 12px; border-radius: 12px; text-decoration: none; }
     .btn-primary { background: #2563eb; color: #fff; border-color: transparent; }
     .btn-primary:hover { filter: brightness(.95); }
 
-    /* แสดงสถานะผู้ใช้ */
-    #authUser { display:flex; align-items:center; gap:8px; color:#4b5563; }
-    .avatar {
-      width: 26px; height: 26px; display: inline-grid; place-items: center;
-      border-radius: 50%; background: #2563eb; color: #fff; font-weight: 700;
-    }
+    /* สถานะผู้ใช้ */
+    #authUser { display:flex; align-items:center; gap:8px; color:#374151; font-weight:600; }
+    .status-ok { padding:6px 10px; border-radius:999px; background:#e6f4ff; color:#1d4ed8; border:1px solid #bfdbfe; }
 
     /* มือถือ */
     .hamburger { display: none; margin-left: auto; font-size: 20px; background: none; border: none; padding: 8px 10px; border-radius: 10px; }
@@ -87,20 +63,17 @@ File: /index.html (หน้า Main)
 </head>
 
 <body>
-
-  <!-- ============ TOP BAR ============ -->
+  <!-- TOP BAR -->
   <div class="topbar">
     <div class="wrap">
       <div class="tb-left">
         <a class="tb-link" href="#" aria-label="Facebook">📘 Facebook</a>
         <a class="tb-link" href="#" aria-label="Instagram">📸 Instagram</a>
-
         <form class="tb-search" onsubmit="event.preventDefault(); alert('ค้นหา: '+(this.q.value||''));">
           <input name="q" type="search" placeholder="Please Enter Your Search Keyword..." />
           <button type="submit">🔍</button>
         </form>
       </div>
-
       <div class="tb-right">
         <a class="tb-link" href="#" title="Google Maps">📍 Google Maps</a>
         <a class="tb-link" href="tel:025552000">📞 0-2555-2000</a>
@@ -109,10 +82,9 @@ File: /index.html (หน้า Main)
     </div>
   </div>
 
-  <!-- ============ MAIN NAVBAR ============ -->
+  <!-- MAIN NAVBAR -->
   <header class="nav-main">
     <div class="nav-inner2">
-      <!-- โลโก้/แบรนด์ -->
       <a class="brand" href="./sleepstat.html">
         <img src="./assets/logo.png" alt="SleepStats Logo" onerror="this.style.display='none'">
         <span>SleepStats</span>
@@ -124,10 +96,9 @@ File: /index.html (หน้า Main)
         <a href="./pages/graph-age-sleep.html">อายุ × การนอน (Histogram)</a>
         <a href="./pages/graph-quality-trend.html">แนวโน้มคุณภาพการนอน</a>
         <a href="./pages/graph-time-distribution.html">กระจายช่วงเวลานอน</a>
-
         <a href="./pages/survey.html">กรอกแบบสอบถาม</a>
 
-        <!-- 🔹 แสดงสถานะผู้ใช้ + ปุ่มเข้า/ออกระบบ -->
+        <!-- สถานะผู้ใช้ + ปุ่มเข้า/ออกระบบ -->
         <span id="authUser"></span>
         <a id="btnLogin"  class="btn btn-primary" href="./pages/signin.html?next=/admin.html">เข้าสู่ระบบ</a>
         <a id="btnLogout" class="btn" style="display:none" href="javascript:void(0)">ออกจากระบบ</a>
@@ -135,7 +106,7 @@ File: /index.html (หน้า Main)
     </div>
   </header>
 
-  <!-- ============ เนื้อหาหลักของหน้า Main ============ -->
+  <!-- MAIN -->
   <main class="container">
     <section class="hero">
       <h1>สรุปภาพรวมการนอน</h1>
@@ -166,10 +137,9 @@ File: /index.html (หน้า Main)
     <span class="muted">© 2025 SleepStats</span>
   </footer>
 
-  <!-- Supabase & สคริปต์สถานะล็อกอิน -->
+  <!-- Supabase & Auth Status -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // ✅ เปลี่ยนเป็นคีย์โปรเจกต์ของคุณเองถ้าจำเป็น
     const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -178,19 +148,14 @@ File: /index.html (หน้า Main)
     const btnLogin  = document.getElementById('btnLogin');
     const btnLogout = document.getElementById('btnLogout');
 
-    function avatar(email){
-      const ch = (email||'?').trim()[0]?.toUpperCase() || '?';
-      return `<span class="avatar">${ch}</span>`;
-    }
-
     async function renderAuth(){
-      const { data: { session } } = await supabase.auth.getSession();
-      if(session?.user){
-        const email = session.user.email;
-        authUser.innerHTML = `${avatar(email)}<span>${email}</span>`;
+      const { data: { session} } = await supabase.auth.getSession();
+      if (session?.user) {
+        // ✅ หลังสมัคร/ล็อกอิน: ซ่อนปุ่มเข้าสู่ระบบและแสดงสถานะเรียบร้อยแล้ว
+        authUser.innerHTML = `<span class="status-ok">เข้าสู่ระบบเรียบร้อยแล้ว</span>`;
         btnLogin.style.display = 'none';
         btnLogout.style.display = 'inline-block';
-      }else{
+      } else {
         authUser.innerHTML = '';
         btnLogin.style.display = 'inline-block';
         btnLogout.style.display = 'none';
@@ -199,13 +164,13 @@ File: /index.html (หน้า Main)
     renderAuth();
     supabase.auth.onAuthStateChange(renderAuth);
 
-    // ออกจากระบบ
+    // ออกจากระบบ → กลับหน้าแรก
     btnLogout?.addEventListener('click', async ()=>{
       await supabase.auth.signOut();
       location.href = '/index.html';
     });
 
-    // toggle เมนูบนมือถือ (คงของเดิมไว้)
+    // toggle เมนูบนมือถือ
     (function () {
       const btn = document.getElementById('hamburger');
       const menu = document.getElementById('menu');
