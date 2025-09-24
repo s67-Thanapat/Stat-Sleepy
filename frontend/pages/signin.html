@@ -30,7 +30,7 @@
     .foot a{color:var(--primary);text-decoration:none}.foot a:hover{text-decoration:underline}
   </style>
 
-  <!-- ✅ โหลดเวอร์ชัน UMD (จะมีตัวแปร global: window.supabase) -->
+  <!-- ใช้ UMD build (window.supabase) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -75,12 +75,9 @@
     const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
 
-    // ---------- SAFETY GUARD ----------
     if (!window.supabase || !window.supabase.createClient) {
-      alert("โหลดไลบรารี Supabase ไม่สำเร็จ กรุณากด Ctrl+F5 เพื่อรีโหลดหน้าใหม่");
-      // ถ้าจะหยุดทำงานทันทีให้ return; ได้
+      alert("โหลดไลบรารี Supabase ไม่สำเร็จ กด Ctrl+F5 เพื่อรีโหลด");
     }
-
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
@@ -105,14 +102,12 @@
       if(saved){ emailEl.value = saved; rememberEl.checked = true; }
     })();
 
-    // สร้าง URL ปลายทางอย่างปลอดภัย
     function resolveNext(next, fallback){
       const v = next || fallback || "/index.html";
-      if (/^https?:\/\//i.test(v)) return v;  // เป็น URL เต็ม
+      if (/^https?:\/\//i.test(v)) return v;
       return `${location.origin}${v.startsWith("/") ? v : `/${v}`}`;
     }
 
-    // login flow + ตรวจแอดมิน
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       msg.style.color = "#0f172a";
@@ -127,34 +122,42 @@
         const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signErr) { msg.style.color="crimson"; msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`; return; }
 
-        // current user
+        // -------- DEBUG #1: แสดง user.id / user.email --------
         const { data: { user }, error: uErr } = await supabase.auth.getUser();
+        console.log("[debug] getUser error:", uErr);
+        console.log("[debug] user.id =", user?.id, "| user.email =", user?.email);
         if(uErr || !user){ msg.style.color="crimson"; msg.textContent="ไม่พบข้อมูลผู้ใช้หลังเข้าสู่ระบบ"; return; }
 
-        // โปรไฟล์: เช็ค is_admin (ลองด้วย id ก่อน แล้ว fallback ด้วย email)
-        let { data: profile } = await supabase
+        // -------- DEBUG #2: อ่านโปรไฟล์ด้วย id (และลอง fallback ด้วย email) --------
+        let { data: profile, error: pErr1 } = await supabase
           .from("profiles")
-          .select("is_admin,email")
+          .select("id,email,is_admin")
           .eq("id", user.id)
           .maybeSingle();
+        console.log("[debug] profile by id:", profile, "| error:", pErr1);
 
         if (!profile) {
-          const { data: p2 } = await supabase
-            .from("profiles").select("is_admin").eq("email", user.email).maybeSingle();
+          const { data: p2, error: pErr2 } = await supabase
+            .from("profiles")
+            .select("id,email,is_admin")
+            .eq("email", user.email)
+            .maybeSingle();
           profile = p2 || null;
+          console.log("[debug] profile by email:", p2, "| error:", pErr2);
         }
 
         const isAdmin = !!profile?.is_admin;
+        console.log("[debug] isAdmin =", isAdmin);
 
-        // ปลายทาง
+        // -------- DEBUG #3: ปลายทางที่จะไป --------
         const nextParam = new URLSearchParams(location.search).get("next");
         const fallback  = isAdmin ? "/admin.html" : "/index.html?login=1";
         const finalUrl  = resolveNext(nextParam, fallback);
+        console.log("[debug] nextParam =", nextParam, "| finalUrl =", finalUrl);
 
         msg.style.color = "seagreen";
         msg.textContent = isAdmin ? "เข้าสู่ระบบสำเร็จ (แอดมิน) กำลังเปลี่ยนหน้า..." : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
 
-        // redirect อย่างมั่นคง
         try { location.replace(finalUrl); } catch {}
         setTimeout(() => { try { window.location.assign(finalUrl); } catch {} }, 200);
         setTimeout(() => { window.location.href = finalUrl; }, 600);
