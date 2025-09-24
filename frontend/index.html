@@ -46,6 +46,26 @@ File: /index.html (หน้า Main)
       .menu2{display:none;width:100%;flex-direction:column;align-items:flex-start;padding-top:8px}
       .menu2.open{display:flex}
     }
+
+    /* VIDEO: How-to section */
+    .video-section{
+      max-width: 960px;
+      margin: 32px auto;
+      padding: 16px;
+      background: #fff;
+      border: 1px solid rgba(0,0,0,.08);
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.06);
+    }
+    .video-header{margin-bottom:12px}
+    .video-title{font-size:20px;font-weight:800;margin:0}
+    .video-desc{margin:0 0 12px;color:#6b7280;font-size:14px}
+    .video-wrap{width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000}
+    .video-wrap iframe{width:100%;height:100%;border:0;display:block}
+
+    .quick-actions .chip[href="#howto"]{
+      border:1px solid rgba(37,99,235,.25);
+    }
   </style>
 </head>
 <body>
@@ -102,6 +122,26 @@ File: /index.html (หน้า Main)
         <a class="chip" href="./pages/graph-quality-trend.html">ดูแนวโน้มคุณภาพ</a>
         <a class="chip" href="./pages/graph-time-distribution.html">ดูการกระจายช่วงเวลา</a>
         <a class="chip" href="./pages/survey.html">กรอกแบบสอบถาม</a>
+        <a class="chip" href="#howto">ดูวิดีโอวิธีใช้เว็บไซต์</a>
+      </div>
+    </section>
+
+    <!-- How-to Video -->
+    <section id="howto" class="video-section container">
+      <div class="video-header">
+        <h2 class="video-title">วิดีโอ: วิธีการใช้งานเว็บไซต์</h2>
+      </div>
+      <p class="video-desc">คลิปสั้นสรุปฟีเจอร์หลัก และวิธีดูกราฟต่าง ๆ บน SleepStats</p>
+      <div class="video-wrap">
+        <!-- 🔴 เปลี่ยน VIDEO_ID ด้านล่างเป็น ID ของ YouTube -->
+        <iframe
+          src="https://www.youtube.com/watch?v=xNUx-rMGvvw"
+          title="SleepStats - วิธีใช้งานเว็บไซต์"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
       </div>
     </section>
 
@@ -143,7 +183,6 @@ File: /index.html (หน้า Main)
     const btnLogin  = document.getElementById('btnLogin');
     const btnLogout = document.getElementById('btnLogout');
 
-    // ปรับลิงก์เข้าสู่ระบบให้กลับมายัง origin เดิมเสมอ
     (function setLoginNext(){
       const next = `${location.origin}/index.html?login=1`;
       const url  = new URL(btnLogin.getAttribute('href'), location.origin);
@@ -166,7 +205,6 @@ File: /index.html (หน้า Main)
       btnLogout.style.display = 'none';
     }
 
-    // fallback อ่าน session จาก localStorage (กันเคส hydrate ไม่ทัน)
     function readSessionFromLocalStorage(){
       try{
         const ref = SUPABASE_URL.match(/https:\/\/(.*?)\.supabase\.co/)?.[1];
@@ -183,43 +221,31 @@ File: /index.html (หน้า Main)
     }
 
     async function renderAuth(initial=false){
-      // 1) getSession
       let { data: { session } } = await supabase.auth.getSession();
-      console.log('[getSession]', session?.user?.email);
       if (session?.user?.email) { showLoggedIn(session.user.email); return; }
 
-      // 2) getUser
       const { data: userRes } = await supabase.auth.getUser();
-      console.log('[getUser]', userRes?.user?.email);
       if (userRes?.user?.email) { showLoggedIn(userRes.user.email); return; }
 
-      // 3) fallback localStorage
       const email = readSessionFromLocalStorage();
-      console.log('[localStorage]', email);
       if (email) { showLoggedIn(email); return; }
 
-      // 4) ลองหน่วงสั้น ๆ ครั้งเดียวหลัง redirect
       if (initial) { setTimeout(() => renderAuth(false), 250); return; }
 
       showLoggedOut();
     }
-
-    // เริ่มตรวจ
     renderAuth(true);
 
-    // ฟัง event เปลี่ยนสถานะ
     supabase.auth.onAuthStateChange((_evt, session) => {
       if (session?.user?.email) showLoggedIn(session.user.email);
       else showLoggedOut();
     });
 
-    // ออกจากระบบ
     btnLogout?.addEventListener('click', async ()=>{
       await supabase.auth.signOut();
       location.href = `${location.origin}/index.html`;
     });
 
-    // toggle เมนูบนมือถือ
     (function () {
       const btn = document.getElementById('hamburger');
       const menu = document.getElementById('menu');
