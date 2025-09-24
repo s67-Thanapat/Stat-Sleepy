@@ -21,4 +21,10 @@ button {cursor: pointer;}
 
 .chart { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:16px; }
 .muted { color:#64748b; font-size:13px; }
+
+@media (max-width: 600px) {
+  .cards { grid-template-columns: 1fr; }
+  header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  
+}
  

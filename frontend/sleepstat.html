@@ -5,14 +5,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>สถิติการนอน (สาธารณะ)</title>
-  <link rel="stylesheet" href="../css/styles.css" />
+  <link rel="stylesheet" href="./css/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
   <header class="container">
     <h1>สถิติการนอน (สาธารณะ)</h1>
-    <nav><a href="./upload.html">อัปโหลด/นำเข้าข้อมูล</a></nav>
+    <nav><a href="index.html">← กลับหน้าหลัก</a>
+      <a href="pages/upload.html">อัปโหลด/นำเข้าข้อมูล</a>
+    </nav>
   </header>
 
   <main class="container">
@@ -38,29 +40,29 @@
     </section>
 
     <section class="chart">
-      <canvas id="sleepChart" height="260"></canvas>
-      <p id="emptyMsg" class="muted" style="display:none;">
+      <canvas id="sleepChart" height="320"></canvas>
+      <p id="emptyMsgSleep" class="muted" style="display:none;">
         ยังไม่มีข้อมูล — ไปที่ <a href="./upload.html">อัปโหลด/นำเข้าข้อมูล</a>
       </p>
     </section>
-    <section class="chart">
-      <canvas id="ageHistChart" height="260"></canvas>
-      <p id="emptyMsg" class="muted" style="display:none;">
+    <section class="chart" style="margin-top:24px;">
+      <canvas id="ageHistChart" height="150"></canvas>
+      <p id="emptyMsgAge" class="muted" style="display:none;">
         ยังไม่มีข้อมูล — ไปที่ <a href="./upload.html">อัปโหลด/นำเข้าข้อมูล</a>
       </p>
     </section>
-    <section class="chart">
-      <canvas id="timeDistChart" height="260"></canvas>
-      <p id="emptyMsg" class="muted" style="display:none;">
+    <section class="chart" style="margin-top:24px;">
+      <canvas id="timeDistChart" height="150"></canvas>
+      <p id="emptyMsgTime" class="muted" style="display:none;">
         ยังไม่มีข้อมูล — ไปที่ <a href="./upload.html">อัปโหลด/นำเข้าข้อมูล</a>
       </p>
     </section>
   </main>
 
-  <script src="../js/config.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/chart.js"></script>
-  <script src="../js/app.js"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/api.js"></script>
+  <script src="./js/chart.js"></script>
+  <script src="./js/app.js"></script>
 </body>
 
 </html>

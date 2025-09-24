@@ -4,9 +4,11 @@
   const btns = Array.from(document.querySelectorAll('.controls button'));
   const avgHoursEl = document.getElementById('avgHours');
   const avgQualityEl = document.getElementById('avgQuality');
-  const emptyMsg = document.getElementById('emptyMsg');
-
+  const emptyMsgAge = document.getElementById('emptyMsgAge');
+  const emptyMsgSleep = document.getElementById('emptyMsgSleep');
+  const emptyMsgTime = document.getElementById('emptyMsgTime');
   let gen = 'all';
+
   let rows = [];
 
   function getGen(age) {
@@ -55,7 +57,9 @@
       renderAgeHistogram([]);
       return;
     }
-    emptyMsg.style.display = 'none';
+    emptyMsgSleep.style.display = 'none';
+    emptyMsgAge.style.display = 'none';
+    emptyMsgTime.style.display = 'none';
 
     const byOldest = [...filtered].sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
     const dailyMap = {};

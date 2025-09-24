@@ -109,7 +109,7 @@
                 return;
             }
             // ✅ สำเร็จ → ไปหน้า admin.html หรือ next
-            const next = new URLSearchParams(location.search).get("next") || "admin.html";
+            const next = new URLSearchParams(location.search).get("next") || "../admin.html";
             location.href = next;
         });
 
