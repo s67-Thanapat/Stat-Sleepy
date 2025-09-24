@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -169,11 +170,144 @@
     .foot a:hover {
       text-decoration: underline
     }
+
+    .card {
+      width: min(92vw, 380px);
+      background: var(--card);
+      border: 1px solid #e6e9f3;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .15);
+      padding: 24px 24px 18px
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-weight: 800;
+      letter-spacing: .3px;
+      text-align: center
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 0 0 18px;
+      font-size: .95rem;
+      text-align: center
+    }
+
+    .field {
+      margin: 10px 0 12px
+    }
+
+    .label {
+      display: block;
+      font-size: .9rem;
+      color: var(--muted);
+      margin: 0 0 6px
+    }
+
+    .input-wrap {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      display: flex;
+      align-items: center
+    }
+
+    input {
+      width: 100%;
+      border: 0;
+      outline: none;
+      background: transparent;
+      padding: 12px 14px;
+      font: inherit;
+      color: inherit
+    }
+
+    .show-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: .9rem;
+      color: var(--primary);
+      cursor: pointer;
+      user-select: none
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 6px 0 10px;
+      font-size: .9rem
+    }
+
+    .row a {
+      color: var(--primary);
+      text-decoration: none
+    }
+
+    .row a:hover {
+      text-decoration: underline
+    }
+
+    .checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none
+    }
+
+    .checkbox input {
+      accent-color: var(--primary)
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      cursor: pointer;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-top: 6px;
+      box-shadow: 0 6px 18px rgba(37, 99, 235, .35)
+    }
+
+    button:hover {
+      background: var(--primary-2)
+    }
+
+    #msg {
+      margin-top: 10px;
+      font-size: .92rem
+    }
+
+    .foot {
+      margin-top: 12px;
+      text-align: center;
+      color: var(--muted);
+      font-size: .92rem
+    }
+
+    .foot a {
+      color: var(--primary);
+      text-decoration: none
+    }
+
+    .foot a:hover {
+      text-decoration: underline
+    }
   </style>
 
   <!-- ใช้ UMD build (window.supabase) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
+
 
 <body>
   <div class="card">
@@ -227,6 +361,7 @@
     const form = document.getElementById("loginForm");
     const emailEl = document.getElementById("email");
     const passEl = document.getElementById("password");
+    const passEl = document.getElementById("password");
     const rememberEl = document.getElementById("remember");
     const msg = document.getElementById("msg");
 
@@ -240,59 +375,64 @@
 
     // remember email
     (function initRemember() {
-      const saved = localStorage.getItem("ss_email");
-      if (saved) { emailEl.value = saved; rememberEl.checked = true; }
-    })();
+      (function initRemember() {
+        const saved = localStorage.getItem("ss_email");
+        if (saved) { emailEl.value = saved; rememberEl.checked = true; }
+        if (saved) { emailEl.value = saved; rememberEl.checked = true; }
+      })();
 
-    function resolveNext(next, fallback) {
-      const v = next || fallback || "/index.html";
-      if (/^https?:\/\//i.test(v)) return v;
-      return `${location.origin}${v.startsWith("/") ? v : `/${v}`}`;
-    }
-
-    // login
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      msg.style.color = "#0f172a";
-      msg.textContent = "กำลังเข้าสู่ระบบ...";
-
-      const email = emailEl.value.trim();
-      const password = passEl.value;
-
-      if (rememberEl.checked) localStorage.setItem("ss_email", email);
-      else localStorage.removeItem("ss_email");
-
-      const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
-      if (signErr) {
-        msg.style.color = "crimson";
-        msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`;
-        return;
+      function resolveNext(next, fallback) {
+        const v = next || fallback || "/index.html";
+        if (/^https?:\/\//i.test(v)) return v;
+        return `${location.origin}${v.startsWith("/") ? v : `/${v}`}`;
       }
 
-      // ✅ ถ้าอีเมลเป็น admin → ไปหน้า admin.html เลย
-      const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
-      const nextParam = new URLSearchParams(location.search).get("next");
-      const fallback = isAdmin ? "/admin.html" : "/index.html?login=1";
-      const finalUrl = resolveNext(nextParam, fallback);
-      msg.style.color = "seagreen";
-      msg.textContent = isAdmin
-        ? "เข้าสู่ระบบสำเร็จ (Admin) กำลังไปหน้าแอดมิน..."
-        : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
+      // login
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        msg.style.color = "#0f172a";
+        msg.textContent = "กำลังเข้าสู่ระบบ...";
 
-      setTimeout(() => { window.location.href = finalUrl; }, 400);
-    });
+        const email = emailEl.value.trim();
+        const password = passEl.value;
 
-    // forgot password
-    document.getElementById("forgot").addEventListener("click", async (e) => {
-      e.preventDefault();
-      const email = emailEl.value.trim();
-      if (!email) { msg.style.color = "crimson"; msg.textContent = "กรุณากรอกอีเมลก่อน"; return; }
-      const redirectTo = `${location.origin}/reset.html`;
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-      if (error) { msg.style.color = "crimson"; msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`; }
-      else { msg.style.color = "seagreen"; msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว"; }
-    });
+        if (rememberEl.checked) localStorage.setItem("ss_email", email);
+        else localStorage.removeItem("ss_email");
+
+        const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (signErr) {
+          msg.style.color = "crimson";
+          msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`;
+          return;
+        }
+
+        // ✅ ถ้าอีเมลเป็น admin → ไปหน้า admin.html เลย
+        const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+        const nextParam = new URLSearchParams(location.search).get("next");
+        const fallback = isAdmin ? "/admin.html" : "/index.html?login=1";
+        const finalUrl = resolveNext(nextParam, fallback);
+        msg.style.color = "seagreen";
+        msg.textContent = isAdmin
+          ? "เข้าสู่ระบบสำเร็จ (Admin) กำลังไปหน้าแอดมิน..."
+          : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
+
+        setTimeout(() => { window.location.href = finalUrl; }, 400);
+      });
+
+      // forgot password
+      document.getElementById("forgot").addEventListener("click", async (e) => {
+        e.preventDefault();
+        const email = emailEl.value.trim();
+        if (!email) { msg.style.color = "crimson"; msg.textContent = "กรุณากรอกอีเมลก่อน"; return; }
+        const redirectTo = `${location.origin}/reset.html`;
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+        if (error) { msg.style.color = "crimson"; msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`; }
+        else { msg.style.color = "seagreen"; msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว"; }
+        if (error) { msg.style.color = "crimson"; msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`; }
+        else { msg.style.color = "seagreen"; msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว"; }
+      });
   </script>
 </body>
+
 
 </html>

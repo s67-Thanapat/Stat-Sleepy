@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Boxplot: Sleep Duration by Occupation</title>
+    <link rel="stylesheet" href="../css/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-box-and-violin-plot/build/Chart.BoxPlot.js"></script>
+    <script>
+        Chart.register(...Object.values(window['chartjs-chart-box-and-violin-plot']));
+    </script>
+</head>
+
+<body>
+    <header class="container">
+        <h1>Boxplot: Sleep Duration by Occupation</h1>
+        <nav><a href="../sleepstat.html">← กลับสถิติการนอน</a></nav>
+    </header>
+    <main class="container">
+        <section class="chart" style="height:400px;">
+            <canvas id="boxplotChart"></canvas>
+        </section>
+    </main>
+    <script src="../js/config.js"></script>
+    <script src="../js/api.js"></script>
+    <script>
+        async function fetchData() {
+            // ดึงข้อมูลทุกคอลัมน์
+            const rows = await fetchAllSessions?.(1000) || [];
+            // Group ตาม occupation
+            const occMap = {};
+            rows.forEach(r => {
+                const occ = r.occupation || r["Occupation"] || "ไม่ระบุ";
+                const dur = r.duration ?? r["Sleep Duration"];
+                if (!occMap[occ]) occMap[occ] = [];
+                if (dur != null && !isNaN(dur)) occMap[occ].push(Number(dur));
+            });
+            // เอาเฉพาะอาชีพที่มีข้อมูลมากกว่า 2 คน
+            const labels = Object.keys(occMap).filter(k => occMap[k].length > 2);
+            const data = labels.map(k => occMap[k]);
+            return { labels, data };
+        }
+
+        function renderBoxplot(labels, data) {
+            const ctx = document.getElementById('boxplotChart');
+            if (!ctx) return;
+            if (window.boxplotChartObj) window.boxplotChartObj.destroy();
+
+            window.boxplotChartObj = new Chart(ctx, {
+                type: 'boxplot',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Sleep Duration (ชั่วโมง)',
+                        data,
+                        backgroundColor: '#60a5fa'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Boxplot: Sleep Duration by Occupation' }
+                    },
+                    scales: {
+                        y: { title: { display: true, text: 'Hours' }, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        (async function () {
+            const { labels, data } = await fetchData();
+            renderBoxplot(labels, data);
+        })();
+    </script>
+</body>
+
+</html>
