@@ -9,7 +9,7 @@ File: /index.html (หน้า Main)
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SleepStats • หน้าแรก</title>
-  <link rel="stylesheet" href="./css/styles.css" />
+  
 
   <style>
     /* TOP BAR */
@@ -441,20 +441,7 @@ File: /index.html (หน้า Main)
       opacity: .95
     }
 
-    /* Survey callout */
-    .survey-callout {
-      max-width: 1080px;
-      margin: 24px auto;
-      padding: 20px;
-      background: #fff;
-      border: 1px solid rgba(0, 0, 0, .08);
-      border-radius: 16px;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, .06);
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      flex-wrap: wrap;
-    }
+    
 
     .survey-callout .icon {
       width: 58px;
@@ -493,6 +480,12 @@ File: /index.html (หน้า Main)
       padding: 18px 16px;
       color: #6b7280
     }
+    /* ลดขนาด icon ใน survey card เท่านั้น */
+.demo-card[href$="survey.html"] .thumb-svg {
+  width: 180px;   /* ปรับตามต้องการ */
+  height: 180px;
+}
+
   </style>
 </head>
 
@@ -643,16 +636,25 @@ File: /index.html (หน้า Main)
     </section>
 
     <!-- Survey CTA -->
-    <section class="survey-callout">
-      <div class="icon">📝</div>
-      <div class="text">
-        <h2>แบบสอบถาม</h2>
-        <p>อยากร่วมเป็นส่วนหนึ่งกับเรา สามารถเข้ามาให้ข้อมูลสุขภาพการนอนกับเราได้ ขอบคุณน้า</p>
+    <!-- Survey (same look/size as other demo cards) -->
+<section class="showcase">
+  <div class="showcase-grid">
+    <a class="demo-card" href="./pages/survey.html" aria-label="ไปทำแบบสอบถาม">
+      <div class="demo-thumb">
+        <!-- ใช้รูป/emoji/ไอคอนอะไรก็ได้; ตัวอย่างเป็น SVG -->
+        <svg viewBox="0 0 120 120" class="thumb-svg" role="img" aria-label="Survey icon">
+          <rect x="0" y="0" width="120" height="120" rx="12" fill="white" />
+          <text x="50%" y="55%" text-anchor="middle" font-size="48" dy=".3em">📝</text>
+        </svg>
       </div>
-      <div class="actions">
-        <a class="btn btn-primary" href="./pages/survey.html">ไปทำแบบสอบถาม</a>
+      <div class="demo-body">
+        <h4 class="demo-title">แบบสอบถาม</h4>
+        <p class="demo-desc">อยากร่วมเป็นส่วนหนึ่งกับเรา เข้ามาให้ข้อมูลสุขภาพการนอนกับเราได้ ขอบคุณน้า</p>
       </div>
-    </section>
+    </a>
+  </div>
+</section>
+
   </main>
 
   <footer class="container footer">
