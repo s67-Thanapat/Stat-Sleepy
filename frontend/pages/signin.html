@@ -41,6 +41,23 @@
     #msg{margin-top:10px;font-size:.92rem}
     .foot{margin-top:12px;text-align:center;color:var(--muted);font-size:.92rem}
     .foot a{color:var(--primary);text-decoration:none}.foot a:hover{text-decoration:underline}
+
+    /* ✅ ปุ่มย้อนกลับด้านล่างซ้าย */
+    .back-wrap{
+      margin-top:10px;
+      display:flex;
+      justify-content:flex-start;
+    }
+    .back-btn{
+      background:#f3f4f6;
+      color:var(--text);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:6px 14px;
+      font-size:.85rem;
+      cursor:pointer;
+    }
+    .back-btn:hover{ background:#e5e7eb }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -75,6 +92,11 @@
 
       <button type="submit">Sign in</button>
       <div id="msg" role="status" aria-live="polite"></div>
+
+      <!-- ✅ ปุ่มย้อนกลับด้านล่างซ้าย -->
+      <div class="back-wrap">
+        <button type="button" class="back-btn" onclick="location.href='./index.html'">← กลับสู่หน้าแรก</button>
+      </div>
     </form>
 
     <div class="foot">
@@ -83,7 +105,6 @@
   </div>
 
   <script>
-    // ---------- CONFIG ----------
     const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
 
@@ -91,7 +112,6 @@
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
 
-    // ✅ อีเมลแอดมิน
     const ADMIN_EMAILS = ["ozone.gg55@gmail.com", "ozza.tv55@gmail.com"];
 
     const form = document.getElementById("loginForm");
@@ -100,7 +120,6 @@
     const rememberEl = document.getElementById("remember");
     const msg = document.getElementById("msg");
 
-    // ===== helpers =====
     function toHref(path){
       const clean = (path || "").replace(/^\/+/, "");
       if (location.protocol === "http:" || location.protocol === "https:") return `/${clean}`;
@@ -111,7 +130,6 @@
       const v = (next && next.trim()) || fallback || "index.html";
       return toHref(v);
     }
-    // รอให้ session พร้อม (กันเด้งกลับเพราะ admin.html อ่าน session ไม่ทัน)
     async function ensureSessionReady(maxTries = 10, delayMs = 150){
       for (let i=0; i<maxTries; i++){
         const { data: { session } } = await supabase.auth.getSession();
@@ -121,7 +139,6 @@
       return false;
     }
 
-    // toggle password
     document.getElementById("toggle").addEventListener("click", () => {
       const isPwd = passEl.type === "password";
       passEl.type = isPwd ? "text" : "password";
@@ -129,13 +146,11 @@
       passEl.focus();
     });
 
-    // remember email
     (function initRemember(){
       const saved = localStorage.getItem("ss_email");
       if(saved){ emailEl.value = saved; rememberEl.checked = true; }
     })();
 
-    // login
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       msg.style.color = "#0f172a";
@@ -155,16 +170,13 @@
           return; 
         }
 
-        // รอ session พร้อมก่อนค่อยเปลี่ยนหน้า
         await ensureSessionReady();
 
         const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
         if (isAdmin) {
           msg.style.color = "seagreen";
           msg.textContent = "เข้าสู่ระบบสำเร็จ (Admin) กำลังไปหน้าแอดมิน...";
-          setTimeout(() => {
-            window.location.replace(toHref("admin.html"));
-          }, 200);
+          setTimeout(() => { window.location.replace(toHref("admin.html")); }, 200);
           return;
         }
 
@@ -182,7 +194,6 @@
       }
     });
 
-    // forgot password
     document.getElementById("forgot").addEventListener("click", async (e) => {
       e.preventDefault();
       const email = emailEl.value.trim();

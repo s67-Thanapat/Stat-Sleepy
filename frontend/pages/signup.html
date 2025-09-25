@@ -29,7 +29,9 @@
       border-radius:16px;
       box-shadow: 0 20px 60px rgba(0,0,0,.15);
       padding:24px 24px 18px;
+      position:relative;
     }
+
     h1{ margin:0 0 4px; font-weight:800; letter-spacing:.3px; text-align:center }
     .sub{color:var(--muted); margin:0 0 18px; font-size:.95rem; text-align:center}
 
@@ -64,6 +66,23 @@
     .foot{ margin-top:12px; text-align:center; color:var(--muted); font-size:.92rem }
     .foot a{ color:var(--primary); text-decoration:none }
     .foot a:hover{ text-decoration:underline }
+
+    /* ✅ ปุ่มย้อนกลับด้านล่างซ้าย */
+    .back-wrap{
+      margin-top:10px;
+      display:flex;
+      justify-content:flex-start; /* ชิดซ้าย */
+    }
+    .back-btn{
+      background:#f3f4f6;
+      color:var(--text);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:6px 14px;
+      font-size:.85rem;
+      cursor:pointer;
+    }
+    .back-btn:hover{ background:#e5e7eb }
   </style>
 
   <!-- Supabase SDK -->
@@ -106,6 +125,11 @@
 
       <button type="submit">สร้างบัญชี</button>
       <div id="msg" role="status" aria-live="polite"></div>
+
+      <!-- ✅ ปุ่มย้อนกลับด้านล่างซ้าย -->
+      <div class="back-wrap">
+        <button type="button" class="back-btn" onclick="location.href='./index.html'">← กลับสู่หน้าแรก</button>
+      </div>
     </form>
 
     <div class="foot">
@@ -116,7 +140,7 @@
   <script>
     // คีย์โปรเจกต์ของคุณ
     const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
+    const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const form = document.getElementById("signupForm");
@@ -149,14 +173,10 @@
       msg.style.color = "#0f172a";
       msg.textContent = "กำลังสร้างบัญชี...";
 
-      // ✅ สมัครและให้ระบบสร้าง session ทันที (ไม่ใช้ email confirmation)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          // ไม่ตั้ง emailRedirectTo และไม่รองรับ email confirmation
-          data: { display_name } // เก็บเป็น user_metadata ได้หากต้องการ
-        }
+        options: { data: { display_name } }
       });
 
       if (error) {
@@ -165,24 +185,15 @@
         return;
       }
 
-      // ควรได้ session ทันที (เพราะไม่ใช้ email confirm)
       if (!data.session) {
         msg.style.color = "crimson";
         msg.textContent = "ไม่พบ session หลังสมัคร โปรดตรวจการตั้งค่า Auth ของ Supabase";
         return;
       }
 
-      // upsert โปรไฟล์
       const uid = data.user.id;
-      const { error: pErr } = await supabase
-        .from("profiles")
-        .upsert({ id: uid, email, display_name }, { onConflict: "id" });
+      await supabase.from("profiles").upsert({ id: uid, email, display_name }, { onConflict: "id" });
 
-      if (pErr) {
-        console.warn("profile upsert error:", pErr);
-      }
-
-      // ตรวจสิทธิ์เพื่อเปลี่ยนหน้า (สิทธิ์แอดมินคุณจัดการใน Supabase เอง)
       const { data: profile } = await supabase
         .from("profiles").select("is_admin").eq("id", uid).maybeSingle();
 
