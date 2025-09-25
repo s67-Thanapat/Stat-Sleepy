@@ -7,6 +7,7 @@
     <title>กระจายช่วงเวลานอน</title>
     <link rel="stylesheet" href="../css/styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
 </head>
 
 <body>
@@ -16,19 +17,217 @@
     </header>
     <main class="container">
         <section class="chart" style="height:320px;">
-            <canvas id="timeDistChart"></canvas>
+            <canvas id="scatterChart"></canvas>
+            <div id="occFilter" style="margin:12px 0 0 0; display:flex; flex-wrap:wrap; gap:8px;"></div>
             <p class="muted" style="margin-top:8px;">จำนวนครั้งที่เริ่มนอนในแต่ละชั่วโมง</p>
         </section>
     </main>
     <script src="../js/config.js"></script>
     <script src="../js/api.js"></script>
-    <script src="../js/chart.js"></script>
     <script>
+        let chartObj = null;
+        let allRows = [];
+        let mode = "age";
+        let showRegression = true;
+        let occList = [];
+        let occShow = {};
+
+        function parseBP(bp) {
+            if (!bp) return null;
+            const m = String(bp).match(/^(\d+)/);
+            return m ? Number(m[1]) : null;
+        }
+
+        function getColor(idx) {
+            const palette = [
+                "#60a5fa", "#f472b6", "#34d399", "#fbbf24", "#a78bfa", "#fb7185", "#facc15", "#38bdf8",
+                "#f87171", "#4ade80", "#c084fc", "#f59e42", "#818cf8", "#f43f5e", "#a3e635", "#f472b6"
+            ];
+            return palette[idx % palette.length];
+        }
+
+        function getScatterByOccupation(rows, mode) {
+            const occMap = {};
+            rows.forEach(r => {
+                const occ = r.occupation || r["Occupation"] || "ไม่ระบุ";
+                let x = null;
+                if (mode === "age") {
+                    x = r.age ?? r["Age"];
+                } else {
+                    x = parseBP(r.bloodPressure ?? r["Blood Pressure"]);
+                }
+                const y = r.duration ?? r["Sleep Duration"];
+                if (x != null && y != null && !isNaN(x) && !isNaN(y)) {
+                    if (!occMap[occ]) occMap[occ] = [];
+                    occMap[occ].push({ x: Number(x), y: Number(y) });
+                }
+            });
+            return occMap;
+        }
+
+        function renderOccFilter(occList, occShow, onChange) {
+            const div = document.getElementById("occFilter");
+            div.innerHTML = occList.map((occ, i) =>
+                `<label style="font-size:0.95em;">
+                    <input type="checkbox" value="${occ}" ${occShow[occ] ? "checked" : ""} style="vertical-align:middle;"/>
+                    <span style="color:${getColor(i)}">${occ}</span>
+                </label>`
+            ).join("");
+            div.querySelectorAll("input[type=checkbox]").forEach(cb => {
+                cb.onchange = () => {
+                    occShow[cb.value] = cb.checked;
+                    onChange();
+                };
+            });
+        }
+
+        function renderScatterWithRegressionByOcc(rows, mode, showRegression) {
+            const ctx = document.getElementById('scatterChart');
+            if (!ctx) return;
+            if (chartObj) chartObj.destroy();
+
+            const occMap = getScatterByOccupation(rows, mode);
+            const datasets = [];
+            let idx = 0;
+            for (const occ of occList) {
+                if (!occShow[occ]) continue;
+                const points = occMap[occ] || [];
+                if (points.length < 2) continue;
+                const color = getColor(idx);
+                // จุด scatter
+                datasets.push({
+                    label: occ,
+                    data: points,
+                    backgroundColor: color,
+                    showLine: false,
+                    pointRadius: 4,
+                    order: 1
+                });
+                // Regression line (ถ้าเลือกให้แสดง)
+                if (showRegression) {
+                    const regData = points.map(p => [p.x, p.y]);
+                    const result = regression.linear(regData);
+                    const xMin = Math.min(...points.map(p => p.x));
+                    const xMax = Math.max(...points.map(p => p.x));
+                    const regLine = [
+                        { x: xMin, y: result.predict(xMin)[1] },
+                        { x: xMax, y: result.predict(xMax)[1] }
+                    ];
+                    datasets.push({
+                        label: occ + " (regression)",
+                        type: "line",
+                        data: regLine,
+                        borderColor: color,
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0,
+                        order: 2
+                    });
+                }
+                idx++;
+            }
+
+            chartObj = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: mode === "age" ? "อายุ" : "ความดันโลหิต (Systolic)"
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: "ชั่วโมงนอนเฉลี่ย"
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function updateChart() {
+            if (!allRows.length) {
+                allRows = await fetchAllSessions?.(1000) || [];
+            }
+            renderScatterWithRegressionByOcc(allRows, mode, showRegression);
+        }
+
         (async function () {
-            const rows = await fetchAllSessions?.(500) || [];
-            renderTimeDistributionChart(rows);
+            allRows = await fetchAllSessions?.(1000) || [];
+            // สร้าง occList และ occShow
+            const occMap = getScatterByOccupation(allRows, mode);
+            occList = Object.keys(occMap);
+            occShow = {};
+            occList.forEach(occ => occShow[occ] = true);
+
+            renderOccFilter(occList, occShow, updateChart);
+            updateChart();
+
+            // เพิ่มปุ่มเลือก mode และปุ่มโชว์/ซ่อน regression
+            const controls = document.createElement("section");
+            controls.className = "controls";
+            controls.style = "margin:16px 0; display:flex; gap:8px; justify-content:center;";
+            controls.innerHTML = `
+                <button id="btnAge" class="active">Linear Regression (ชั่วโมงนอนเฉลี่ย vs อายุ)</button>
+                <button id="btnBP">Linear Regression (ชั่วโมงนอนเฉลี่ย vs ความดันโลหิต Systolic)</button>
+                <button id="btnToggleReg" class="toggle-reg on">ซ่อนเส้น Regression</button>
+            `;
+            document.body.insertBefore(controls, document.body.querySelector("header"));
+
+            document.getElementById("btnAge").onclick = function () {
+                mode = "age";
+                // รีเฟรช occList/occShow ใหม่
+                const occMap = getScatterByOccupation(allRows, mode);
+                occList = Object.keys(occMap);
+                occShow = {};
+                occList.forEach(occ => occShow[occ] = true);
+                renderOccFilter(occList, occShow, updateChart);
+                updateChart();
+                setActiveBtn("btnAge");
+            };
+            document.getElementById("btnBP").onclick = function () {
+                mode = "bp";
+                const occMap = getScatterByOccupation(allRows, mode);
+                occList = Object.keys(occMap);
+                occShow = {};
+                occList.forEach(occ => occShow[occ] = true);
+                renderOccFilter(occList, occShow, updateChart);
+                updateChart();
+                setActiveBtn("btnBP");
+            };
+            document.getElementById("btnToggleReg").onclick = function () {
+                showRegression = !showRegression;
+                updateChart();
+                this.textContent = showRegression ? "ซ่อนเส้น Regression" : "แสดงเส้น Regression";
+                this.classList.toggle("on", showRegression);
+            };
+
+            function setActiveBtn(id) {
+                ["btnAge", "btnBP"].forEach(bid => {
+                    document.getElementById(bid).classList.toggle("active", bid === id);
+                });
+            }
         })();
     </script>
+    <style>
+        .controls button.active {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .controls button.toggle-reg.on {
+            background: #fbbf24;
+            color: #222;
+        }
+    </style>
 </body>
 
 </html>

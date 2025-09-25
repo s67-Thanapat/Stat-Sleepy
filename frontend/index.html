@@ -9,7 +9,7 @@ File: /index.html (หน้า Main)
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SleepStats • หน้าแรก</title>
-  
+
 
   <style>
     /* TOP BAR */
@@ -441,7 +441,7 @@ File: /index.html (หน้า Main)
       opacity: .95
     }
 
-    
+
 
     .survey-callout .icon {
       width: 58px;
@@ -480,12 +480,13 @@ File: /index.html (หน้า Main)
       padding: 18px 16px;
       color: #6b7280
     }
-    /* ลดขนาด icon ใน survey card เท่านั้น */
-.demo-card[href$="survey.html"] .thumb-svg {
-  width: 180px;   /* ปรับตามต้องการ */
-  height: 180px;
-}
 
+    /* ลดขนาด icon ใน survey card เท่านั้น */
+    .demo-card[href$="survey.html"] .thumb-svg {
+      width: 180px;
+      /* ปรับตามต้องการ */
+      height: 180px;
+    }
   </style>
 </head>
 
@@ -513,7 +514,7 @@ File: /index.html (หน้า Main)
   <!-- MAIN NAVBAR -->
   <header class="nav-main">
     <div class="nav-inner2">
-      <a class="brand" href="./sleepstat.html">
+      <a class="brand" href="#">
         <img src="./assets/logo.png" alt="SleepStats Logo" onerror="this.style.display='none'">
         <span>SleepStats</span>
       </a>
@@ -617,18 +618,40 @@ File: /index.html (หน้า Main)
           <div class="demo-thumb">
             <svg viewBox="0 0 300 150" class="thumb-svg" role="img" aria-label="ตัวอย่าง Bar chart">
               <rect x="0" y="0" width="300" height="150" fill="white" />
-              <g fill="#f59e0b">
-                <rect x="35" y="70" width="30" height="60" rx="4" />
-                <rect x="85" y="90" width="30" height="40" rx="4" />
-                <rect x="135" y="50" width="30" height="80" rx="4" />
-                <rect x="185" y="35" width="30" height="95" rx="4" />
-                <rect x="235" y="85" width="30" height="45" rx="4" />
+              <g stroke-width="5">
+                <line x1="20" y1="20" x2="20" y2="130" stroke="#000" stroke-width="5" />
+                <line x1="18" y1="130" x2="280" y2="130" stroke="#000" stroke-width="5" />
+                <line x1="70" y1="115" x2="250" y2="25" stroke="#e1d5a2" stroke-width="5" />
               </g>
-              <line x1="20" y1="130" x2="280" y2="130" stroke="#cbd5e1" stroke-width="2" />
+              <g>
+                <!-- สุ่มจุดกระจายบนกราฟ -->
+                <circle cx="32" cy="120" r="3" fill="#f59e0b" />
+                <circle cx="44" cy="110" r="3" fill="#f59e0b" />
+                <circle cx="56" cy="125" r="3" fill="#f59e0b" />
+                <circle cx="68" cy="100" r="3" fill="#f59e0b" />
+                <circle cx="80" cy="90" r="3" fill="#f59e0b" />
+                <circle cx="92" cy="105" r="3" fill="#f59e0b" />
+                <circle cx="104" cy="80" r="3" fill="#f59e0b" />
+                <circle cx="116" cy="70" r="3" fill="#f59e0b" />
+                <circle cx="128" cy="95" r="3" fill="#f59e0b" />
+                <circle cx="140" cy="60" r="3" fill="#f59e0b" />
+                <circle cx="152" cy="85" r="3" fill="#f59e0b" />
+                <circle cx="164" cy="50" r="3" fill="#f59e0b" />
+                <circle cx="176" cy="75" r="3" fill="#f59e0b" />
+                <circle cx="188" cy="40" r="3" fill="#f59e0b" />
+                <circle cx="200" cy="65" r="3" fill="#f59e0b" />
+                <circle cx="212" cy="55" r="3" fill="#f59e0b" />
+                <circle cx="224" cy="35" r="3" fill="#f59e0b" />
+                <circle cx="236" cy="45" r="3" fill="#f59e0b" />
+                <circle cx="248" cy="30" r="3" fill="#f59e0b" />
+                <circle cx="260" cy="50" r="3" fill="#f59e0b" />
+              </g>
+
+
             </svg>
           </div>
           <div class="demo-body">
-            <h4 class="demo-title">Bar chart — กระจายช่วงเวลาเข้านอน</h4>
+            <h4 class="demo-title">Scatter ความสัมพันธ์ของตัวบ่งชี้หลัก (จำนวนการนอน) vs สุขภาพและกิจรวัตร</h4>
             <p class="demo-desc">ดูชั่วโมงที่มักเข้านอนบ่อยที่สุดในแต่ละช่วงเวลา</p>
           </div>
         </a>
@@ -637,23 +660,23 @@ File: /index.html (หน้า Main)
 
     <!-- Survey CTA -->
     <!-- Survey (same look/size as other demo cards) -->
-<section class="showcase">
-  <div class="showcase-grid">
-    <a class="demo-card" href="./pages/survey.html" aria-label="ไปทำแบบสอบถาม">
-      <div class="demo-thumb">
-        <!-- ใช้รูป/emoji/ไอคอนอะไรก็ได้; ตัวอย่างเป็น SVG -->
-        <svg viewBox="0 0 120 120" class="thumb-svg" role="img" aria-label="Survey icon">
-          <rect x="0" y="0" width="120" height="120" rx="12" fill="white" />
-          <text x="50%" y="55%" text-anchor="middle" font-size="48" dy=".3em">📝</text>
-        </svg>
+    <section class="showcase">
+      <div class="showcase-grid">
+        <a class="demo-card" href="./pages/survey.html" aria-label="ไปทำแบบสอบถาม">
+          <div class="demo-thumb">
+            <!-- ใช้รูป/emoji/ไอคอนอะไรก็ได้; ตัวอย่างเป็น SVG -->
+            <svg viewBox="0 0 120 120" class="thumb-svg" role="img" aria-label="Survey icon">
+              <rect x="0" y="0" width="120" height="120" rx="12" fill="white" />
+              <text x="50%" y="55%" text-anchor="middle" font-size="48" dy=".3em">📝</text>
+            </svg>
+          </div>
+          <div class="demo-body">
+            <h4 class="demo-title">แบบสอบถาม</h4>
+            <p class="demo-desc">อยากร่วมเป็นส่วนหนึ่งกับเรา เข้ามาให้ข้อมูลสุขภาพการนอนกับเราได้ ขอบคุณน้า</p>
+          </div>
+        </a>
       </div>
-      <div class="demo-body">
-        <h4 class="demo-title">แบบสอบถาม</h4>
-        <p class="demo-desc">อยากร่วมเป็นส่วนหนึ่งกับเรา เข้ามาให้ข้อมูลสุขภาพการนอนกับเราได้ ขอบคุณน้า</p>
-      </div>
-    </a>
-  </div>
-</section>
+    </section>
 
   </main>
 
