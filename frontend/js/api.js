@@ -212,6 +212,8 @@ async function fetchAllSessions(limit = 500) {
   return rows.map(r => ({
     occupation: r["Occupation"],
     duration: r["Sleep Duration"],
+    quality: r["Quality of Sleep"],
+    stress: r["Stress Level"],
     // ...map field อื่นๆ ตามต้องการ
     _raw: r
   }));
