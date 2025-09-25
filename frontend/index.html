@@ -4,15 +4,80 @@ File: /index.html (หน้า Main)
 <!doctype html>
 <html lang="th" translate="no">
 
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SleepStats • หน้าแรก</title>
   <link rel="stylesheet" href="./css/styles.css" />
-  <script defer src="./js/main.js"></script>
 
   <style>
     /* TOP BAR */
+    .topbar {
+      background: linear-gradient(90deg, #0b5bd3, #23a6ff);
+      color: #fff;
+      font-size: 14px;
+      padding: 6px 0
+    }
+
+    .topbar .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: space-between
+    }
+
+    .tb-left,
+    .tb-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap
+    }
+
+    .tb-link {
+      color: #fff;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 10px
+    }
+
+    .tb-link:hover {
+      background: rgba(255, 255, 255, .12)
+    }
+
+    .tb-search {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .15)
+    }
+
+    .tb-search input {
+      border: 0;
+      outline: 0;
+      padding: 8px 12px;
+      min-width: 240px;
+      font-size: 14px
+    }
+
+    .tb-search button {
+      border: 0;
+      background: #0b5bd3;
+      color: #fff;
+      padding: 8px 12px;
+      cursor: pointer
+    }
+
     .topbar {
       background: linear-gradient(90deg, #0b5bd3, #23a6ff);
       color: #fff;
@@ -431,6 +496,7 @@ File: /index.html (หน้า Main)
   </style>
 </head>
 
+
 <body>
   <!-- TOP BAR -->
   <div class="topbar">
@@ -462,7 +528,7 @@ File: /index.html (หน้า Main)
       <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">☰</button>
 
       <nav class="menu2" id="menu">
-        <a href="./pages/graph-age-sleep.html">Histogram</a>
+        <a href="./pages/graph-age-sleep.html">Bar Chart</a>
         <a href="./pages/graph-quality-trend.html">Boxplot</a>
         <a href="./pages/graph-time-distribution.html">Bar chart</a>
         <a href="./pages/survey.html">แบบสอบถาม</a>
@@ -478,10 +544,16 @@ File: /index.html (หน้า Main)
   <!-- MAIN -->
   <main class="container">
     <section class="hero">
-      <center><h1>Welcome To Stat World</h1></center>
-      <center><h3>"ยินดีต้อนรับ"</h3></center>
-      <center><p class="muted">เลือกชนิดกราฟจากแถบด้านบนเพื่อดูรายละเอียดเชิงลึก หรือมีส่วนร่วมด้วยการให้ข้อมูลในแบบสอบถาม</p></center>
-    
+      <center>
+        <h1>Welcome To Stat World</h1>
+      </center>
+      <center>
+        <h3>"ยินดีต้อนรับ"</h3>
+      </center>
+      <center>
+        <p class="muted">เลือกชนิดกราฟจากแถบด้านบนเพื่อดูรายละเอียดเชิงลึก หรือมีส่วนร่วมด้วยการให้ข้อมูลในแบบสอบถาม</p>
+      </center>
+
     </section>
 
     <!-- How-to Video -->
@@ -519,7 +591,7 @@ File: /index.html (หน้า Main)
             </svg>
           </div>
           <div class="demo-body">
-            <h4 class="demo-title">Histogram — อายุ × ชั่วโมงนอน</h4>
+            <h4 class="demo-title">Bar Chart แสดงการนอน ความเครียด คุณภาพการนอน</h4>
             <p class="demo-desc">ดูการกระจายตัวของชั่วโมงการนอนในช่วงอายุที่ต่างกัน</p>
           </div>
         </a>
@@ -612,11 +684,13 @@ File: /index.html (หน้า Main)
       const ch = (email || '?').trim()[0]?.toUpperCase() || '?';
       return `<span class="avatar">${ch}</span>`;
     }
+
     function showLoggedIn(email) {
       authUser.innerHTML = `${avatar(email)}<span>${email}</span>`;
       btnLogin.style.display = 'none';
       btnLogout.style.display = 'inline-block';
     }
+
     function showLoggedOut() {
       authUser.innerHTML = '';
       btnLogin.style.display = 'inline-block';
