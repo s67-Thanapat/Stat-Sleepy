@@ -6,14 +6,25 @@
   <title>Sign in</title>
 
   <style>
-    :root{--bg1:#0b5bd3;--bg2:#23a6ff;--text:#0f172a;--muted:#6b7280;--border:#e5e7eb;--primary:#2563eb;--primary-2:#1e40af;--card:#ffffff}
+    :root{
+      --bg1:#0b5bd3;--bg2:#23a6ff;
+      --text:#0f172a;--muted:#6b7280;
+      --border:#e5e7eb;--primary:#2563eb;--primary-2:#1e40af;
+      --card:#ffffff;
+    }
     *{box-sizing:border-box} html,body{height:100%}
     body{
       margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);
-      background:radial-gradient(1200px 600px at 15% -10%,#ffffff66,transparent),linear-gradient(120deg,var(--bg1),var(--bg2));
+      background:radial-gradient(1200px 600px at 15% -10%,#ffffff66,transparent),
+                 linear-gradient(120deg,var(--bg1),var(--bg2));
       display:grid;place-items:center;padding:24px
     }
-    .card{width:min(92vw,380px);background:var(--card);border:1px solid #e6e9f3;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:24px 24px 18px}
+    .card{
+      width:min(92vw,380px);background:var(--card);
+      border:1px solid #e6e9f3;border-radius:16px;
+      box-shadow:0 20px 60px rgba(0,0,0,.15);
+      padding:24px 24px 18px
+    }
     h1{margin:0 0 4px;font-weight:800;letter-spacing:.3px;text-align:center}
     .sub{color:var(--muted);margin:0 0 18px;font-size:.95rem;text-align:center}
     .field{margin:10px 0 12px}
@@ -32,7 +43,7 @@
     .foot a{color:var(--primary);text-decoration:none}.foot a:hover{text-decoration:underline}
   </style>
 
-  <!-- ใช้ UMD build (มี window.supabase) -->
+  <!-- ใช้ UMD build (window.supabase) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -77,12 +88,12 @@
     const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
 
-    if (!window.supabase || !window.supabase.createClient) {
-      alert("โหลดไลบรารี Supabase ไม่สำเร็จ กด Ctrl+F5 เพื่อรีโหลด");
-    }
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
+
+    // ✅ อีเมลแอดมิน
+    const ADMIN_EMAILS = ["ozone.gg55@gmail.com", "ozza.tv55@gmail.com"];
 
     const form = document.getElementById("loginForm");
     const emailEl = document.getElementById("email");
@@ -104,63 +115,43 @@
       if(saved){ emailEl.value = saved; rememberEl.checked = true; }
     })();
 
-    // ปั้น URL ปลายทางให้ปลอดภัย
     function resolveNext(next, fallback){
       const v = next || fallback || "/index.html";
-      if (/^https?:\/\//i.test(v)) return v;          // URL เต็ม
-      return `${location.origin}${v.startsWith("/") ? v : `/${v}`}`; // path
+      if (/^https?:\/\//i.test(v)) return v;
+      return `${location.origin}${v.startsWith("/") ? v : `/${v}`}`;
     }
 
-    // --------- SIGN IN & CHECK ADMIN BY ID ONLY ---------
+    // login
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       msg.style.color = "#0f172a";
       msg.textContent = "กำลังเข้าสู่ระบบ...";
 
-      try {
-        const email = emailEl.value.trim();
-        const password = passEl.value;
+      const email = emailEl.value.trim();
+      const password = passEl.value;
 
-        if(rememberEl.checked) localStorage.setItem("ss_email", email);
-        else localStorage.removeItem("ss_email");
+      if(rememberEl.checked) localStorage.setItem("ss_email", email);
+      else localStorage.removeItem("ss_email");
 
-        const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
-        if (signErr) { msg.style.color="crimson"; msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`; return; }
-
-        // ผู้ใช้ปัจจุบัน
-        const { data: { user }, error: uErr } = await supabase.auth.getUser();
-        if(uErr || !user){ msg.style.color="crimson"; msg.textContent="ไม่พบข้อมูลผู้ใช้หลังเข้าสู่ระบบ"; return; }
-
-        // ✅ ตรวจสิทธิ์จาก profiles ด้วย id เท่านั้น
-        const { data: profile, error: pErr } = await supabase
-          .from("profiles")
-          .select("is_admin")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        // ถ้าไม่มีแถวใน profiles ให้ถือว่าไม่ใช่แอดมิน
-        const isAdmin = !!profile?.is_admin;
-
-        // ปลายทาง
-        const nextParam = new URLSearchParams(location.search).get("next");
-        const fallback  = isAdmin ? "/admin.html" : "/index.html?login=1";
-        const finalUrl  = resolveNext(nextParam, fallback);
-
-        msg.style.color = "seagreen";
-        msg.textContent = isAdmin
-          ? "เข้าสู่ระบบสำเร็จ (แอดมิน) กำลังเปลี่ยนหน้า..."
-          : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
-
-        // redirect ให้แน่ใจว่าไปแน่นอน
-        try { location.replace(finalUrl); } catch {}
-        setTimeout(() => { try { window.location.assign(finalUrl); } catch {} }, 150);
-        setTimeout(() => { window.location.href = finalUrl; }, 400);
-
-      } catch (err) {
-        console.error("[signin fatal]", err);
-        msg.style.color="crimson";
-        msg.textContent = "เกิดข้อผิดพลาดที่ไม่คาดคิด ลองใหม่อีกครั้ง";
+      const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (signErr) { 
+        msg.style.color="crimson"; 
+        msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`; 
+        return; 
       }
+
+      // ✅ ถ้าอีเมลเป็น admin → ไปหน้า admin.html เลย
+      const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+      const nextParam = new URLSearchParams(location.search).get("next");
+      const fallback  = isAdmin ? "/admin.html" : "/index.html?login=1";
+      const finalUrl  = resolveNext(nextParam, fallback);
+
+      msg.style.color = "seagreen";
+      msg.textContent = isAdmin
+        ? "เข้าสู่ระบบสำเร็จ (Admin) กำลังไปหน้าแอดมิน..."
+        : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
+
+      setTimeout(() => { window.location.href = finalUrl; }, 400);
     });
 
     // forgot password

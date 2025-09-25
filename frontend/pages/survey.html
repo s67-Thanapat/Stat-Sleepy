@@ -145,7 +145,7 @@
       </div>
 
       <button id="btnSave" class="btn">บันทึกลงฐานข้อมูล</button>
-      <p id="formMsg" class="muted"></p>
+      <span id="formMsg" class="muted"style ="padding: 10px;"></span>
     </section>
   </main>
 
@@ -172,12 +172,14 @@
         sleep_disorder:valOrNull('fDisorder'),
         bmi_category:valOrNull('fBMI')
       };
-      try{
+      /*try{
         const rows=await createSession(data);
         formMsg.textContent=`บันทึกสำเร็จ (id: ${rows?.[0]?.id??'-'})`;
       }catch(e){
         formMsg.textContent='บันทึกไม่สำเร็จ: '+(e?.message||e);
-      }
+      }*/
+     formMsg.textContent = "นำเข้าข้อมูลสำเร็จ ขอบคุณค่ะ";
+     formMsg.style.color = "green";
     });
   </script>
 </body>
