@@ -1,112 +1,174 @@
-<script src="../js/config.js"></script>
-<script src="../js/api.js"></script>
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ชั่วโมงนอน × อาชีพ (Box plot)</title>
+  <link rel="stylesheet" href="../css/styles.css" />
 
-<script>
-  // ---- helpers: normalize key & find columns แบบยืดหยุ่น ----
-  const norm = s => String(s).toLowerCase().replace(/[\s_]/g, '');
-  function findKey(row, aliases) {
-    const map = new Map(Object.keys(row).map(k => [norm(k), k]));
-    for (const a of aliases) {
-      const k = map.get(norm(a));
-      if (k) return k;           // คืนชื่อคีย์จริงที่อยู่ในอ็อบเจ็กต์
-    }
-    return null;
-  }
-  function groupBy(rows, keyFn, valFn) {
-    const m = new Map();
-    for (const r of rows) {
-      const k = keyFn(r);
-      const v = valFn(r);
-      if (!k || isNaN(v)) continue;
-      if (!m.has(k)) m.set(k, []);
-      m.get(k).push(v);
-    }
-    return m;
-  }
-  const clampHours = (arr, min=2, max=14) =>
-    arr.filter(x => typeof x === 'number' && isFinite(x) && x>=min && x<=max);
+  <!-- Chart.js v4 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <!-- ปลั๊กอิน Box/Violin ที่รองรับ v4 -->
+  <script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot@4/build/index.umd.min.js"></script>
+</head>
 
-  const mean = a => a.length ? a.reduce((s,x)=>s+x,0)/a.length : 0;
-  const median = a => {
-    if (!a.length) return 0;
-    const s = [...a].sort((x,y)=>x-y), n=s.length, m=Math.floor(n/2);
-    return n%2 ? s[m] : (s[m-1]+s[m])/2;
-  };
+<body>
+  <header class="container">
+    <h1>ชั่วโมงนอน × อาชีพ (Box plot)</h1>
+    <nav><a href="../index.html">← กลับหน้าแรก</a></nav>
+  </header>
 
-  function renderBoxPlot(groupMap) {
-    const entries = [...groupMap.entries()]
-      .map(([label, values]) => ({ label, values, med: median(values) }))
-      .sort((a,b)=> b.med - a.med);
+  <main class="container">
+    <section class="chart" style="height:360px;">
+      <!-- สำคัญ: id ต้องตรงกับในสคริปต์ -->
+      <canvas id="boxPlot"></canvas>
+      <p class="muted" style="margin-top:8px;">
+        กล่อง: Q1–Q3 • เส้นกลาง: มัธยฐาน • ▲: ค่าเฉลี่ย • แกน Y = ชั่วโมง/คืน
+      </p>
+    </section>
+  </main>
 
-    const labels = entries.map(e => e.label);
-    const series = entries.map(e => e.values);
-    const means  = entries.map(e => ({ x: e.label, y: mean(e.values) }));
+  <!-- ไฟล์เดิมของโปรเจกต์ -->
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
 
-    const ctx = document.getElementById('boxPlot');
-    if (ctx._chart) ctx._chart.destroy();
-
-    ctx._chart = new Chart(ctx, {
-      type: 'boxplot',
-      data: {
-        labels,
-        datasets: [
-          { label: 'ชั่วโมงต่อคืน', data: series, outlierRadius: 3, itemRadius: 0 },
-          { type: 'scatter', label: 'ค่าเฉลี่ย', data: means, parsing: false,
-            pointStyle: 'triangle', radius: 5, borderWidth: 0 }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: 'Boxplot: Sleep Duration by Occupation' },
-          tooltip: { intersect: false }
-        },
-        scales: {
-          x: { ticks: { maxRotation: 60, minRotation: 30 } },
-          y: { title: { display: true, text: 'Hours' }, suggestedMin: 4, suggestedMax: 10 }
-        }
+  <script>
+    // ---------- utilities ----------
+    const norm = s => String(s).toLowerCase().replace(/[\s_]/g, '');
+    function findKey(row, aliases) {
+      const dict = new Map(Object.keys(row).map(k => [norm(k), k]));
+      for (const a of aliases) {
+        const k = dict.get(norm(a));
+        if (k) return k;            // คืนชื่อคีย์จริงในอ็อบเจ็กต์
       }
+      return null;
+    }
+
+    function groupBy(rows, keyFn, valFn) {
+      const m = new Map();
+      for (const r of rows) {
+        const k = keyFn(r);
+        const v = valFn(r);
+        if (!k || isNaN(v)) continue;
+        if (!m.has(k)) m.set(k, []);
+        m.get(k).push(v);
+      }
+      return m;
+    }
+
+    const clampHours = (arr, min=2, max=14) =>
+      arr.filter(x => typeof x === 'number' && isFinite(x) && x >= min && x <= max);
+
+    const mean = a => a.length ? a.reduce((s,x)=>s+x,0)/a.length : 0;
+    const median = a => {
+      if (!a.length) return 0;
+      const s = [...a].sort((x,y)=>x-y), n=s.length, m=Math.floor(n/2);
+      return n%2 ? s[m] : (s[m-1]+s[m])/2;
+    };
+
+    function renderBoxPlot(groupMap) {
+      const entries = [...groupMap.entries()]
+        .map(([label, values]) => ({ label, values, med: median(values) }))
+        .sort((a,b)=> b.med - a.med);
+
+      const labels = entries.map(e => e.label);
+      const series = entries.map(e => e.values);
+      const means  = entries.map(e => ({ x: e.label, y: mean(e.values) }));
+
+      // --- หา/สร้าง canvas แบบปลอดภัย ---
+      let canvas = document.getElementById('boxPlot');
+      if (!canvas) {
+        console.error('Canvas #boxPlot not found. Creating one dynamically.');
+        const section = document.querySelector('section.chart') || document.body;
+        canvas = document.createElement('canvas');
+        canvas.id = 'boxPlot';
+        section.prepend(canvas);
+      }
+
+      // ทำลายกราฟเดิมถ้ามี (วิธีที่ถูกต้องของ v4)
+      const prev = Chart.getChart(canvas);
+      if (prev) prev.destroy();
+
+      new Chart(canvas, {
+        type: 'boxplot',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'ชั่วโมงต่อคืน',
+              data: series,          // array ของ array (หนึ่งกลุ่ม = หนึ่งอาเรย์)
+              outlierRadius: 3,
+              itemRadius: 0
+            },
+            {
+              type: 'scatter',       // ▲ overlay ค่าเฉลี่ย
+              label: 'ค่าเฉลี่ย',
+              data: means,
+              parsing: false,
+              pointStyle: 'triangle',
+              radius: 5,
+              borderWidth: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Boxplot: Sleep Duration by Occupation' },
+            tooltip: { intersect: false }
+          },
+          scales: {
+            x: { ticks: { maxRotation: 60, minRotation: 30 } },
+            y: {
+              title: { display: true, text: 'Hours' },
+              suggestedMin: 4,
+              suggestedMax: 10
+            }
+          }
+        }
+      });
+    }
+
+    // ---------- main ----------
+    document.addEventListener('DOMContentLoaded', async () => {
+      let rows = await (fetchAllSessions?.(1000));
+
+      // รองรับทั้งแบบที่คืน {data:[...]} และคืนอาเรย์ตรง ๆ
+      if (rows && !Array.isArray(rows) && Array.isArray(rows.data)) rows = rows.data;
+      rows = Array.isArray(rows) ? rows : [];
+
+      console.log('[boxplot] rows length =', rows.length);
+      if (!rows.length) { console.warn('ไม่พบข้อมูลจาก Supabase'); return; }
+
+      const sample = rows[0];
+      // หา key จริงที่มีในอ็อบเจ็กต์ โดยยอมรับ alias หลายแบบ
+      const occKey = findKey(sample, ['Occupation','job','role','profession','อาชีพ']);
+      const durKey = findKey(sample, ['Sleep Duration','sleep_duration','sleepHours','hours','duration','ชั่วโมงนอน']);
+
+      console.log('[boxplot] detected keys ->', { occKey, durKey });
+      if (!occKey || !durKey) {
+        alert('หา field ไม่เจอ: ต้องมีคอลัมน์อาชีพ และชั่วโมงนอน (ดู console)');
+        console.log('sample row =', sample);
+        return;
+      }
+
+      const grouped = groupBy(
+        rows,
+        r => String(r[occKey] ?? '').trim(),
+        r => Number(r[durKey])
+      );
+
+      // กรองค่าเพี้ยน และลบกลุ่มว่าง
+      for (const [k, arr] of grouped) {
+        const cleaned = clampHours(arr);
+        if (cleaned.length) grouped.set(k, cleaned);
+        else grouped.delete(k);
+      }
+
+      console.log('[boxplot] group count =', grouped.size);
+      renderBoxPlot(grouped);
     });
-  }
-
-  // ---- main ----
-  (async function () {
-    let rows = await (fetchAllSessions?.(1000));
-    // รองรับกรณี API คืน { data: [...] }
-    if (rows && !Array.isArray(rows) && Array.isArray(rows.data)) rows = rows.data;
-    rows = Array.isArray(rows) ? rows : [];
-
-    console.log('[boxplot] rows length =', rows.length);
-    if (!rows.length) { console.warn('ไม่พบข้อมูลจาก Supabase'); return; }
-
-    // หาคีย์จริงจาก sample โดยยอมรับ alias หลายแบบ (มีช่องว่าง/underscore ก็ได้)
-    const sample = rows[0];
-    const occKey = findKey(sample, ['Occupation','job','role','profession','อาชีพ']);
-    const durKey = findKey(sample, ['Sleep Duration','sleep_duration','sleepHours','hours','duration','ชั่วโมงนอน']);
-
-    console.log('[boxplot] sample row =', sample);
-    console.log('[boxplot] detected keys ->', { occKey, durKey });
-
-    if (!occKey || !durKey) {
-      alert('หา field ไม่เจอ: ต้องมีคอลัมน์อาชีพและชั่วโมงนอน\nดู console เพื่อดูคีย์ที่มีจริง');
-      return;
-    }
-
-    const grouped = groupBy(
-      rows,
-      r => String(r[occKey] ?? '').trim(),
-      r => Number(r[durKey])
-    );
-
-    // กรองค่าเพี้ยน & ลบกลุ่มว่าง
-    for (const [k, arr] of grouped) {
-      const cleaned = clampHours(arr);
-      if (cleaned.length) grouped.set(k, cleaned);
-      else grouped.delete(k);
-    }
-
-    console.log('[boxplot] group count =', grouped.size);
-    renderBoxPlot(grouped);
-  })();
-</script>
+  </script>
+</body>
+</html>
