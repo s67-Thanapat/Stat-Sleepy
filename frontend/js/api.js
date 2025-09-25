@@ -210,10 +210,19 @@ async function fetchAllSessions(limit = 500) {
   if (!res.ok) throw new Error(`REST ${res.status} ${await res.text()}`);
   const rows = await res.json();
   return rows.map(r => ({
+    peopleId: r["Person ID"],
+    gender: r["Gender"],
+    age: r["Age"],
     occupation: r["Occupation"],
+    heartRate: r["Heart Rate"],
+    dailySteps: r["Daily Steps"],
+    physicalActivity: r["Physical Activity Level"],
     duration: r["Sleep Duration"],
     quality: r["Quality of Sleep"],
     stress: r["Stress Level"],
+    bloodPressure: r["Blood Pressure"],
+    bmi: r["BMI Category"],
+    sleepDisorder: r["Sleep Disorder"],
     // ...map field อื่นๆ ตามต้องการ
     _raw: r
   }));
