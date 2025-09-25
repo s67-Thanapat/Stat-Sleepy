@@ -1,169 +1,234 @@
 <!doctype html>
 <html lang="th">
-
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Bar Chart ชั่วโมงนอนเฉลี่ยแยกตามอาชีพ</title>
-    <link rel="stylesheet" href="../css/styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bar Chart ชั่วโมงนอน/ความเครียด/คุณภาพ แยกตามอาชีพ</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <style>
+    .controls { margin-top:16px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+    .controls button.active { background:#2563eb; color:#fff; }
+    .legend { display:flex; gap:16px; align-items:center; justify-content:center; margin:8px 0 0; font-size:0.95rem; flex-wrap:wrap; }
+    .legend .dot { width:14px; height:14px; border-radius:3px; display:inline-block; margin-right:6px; vertical-align:middle; }
+  </style>
 </head>
 
 <body>
-    <section class="controls" style="margin-top:16px; display:flex; gap:8px; justify-content:center;">
-        <button id="btnSleep" class="active">Bar chart (avg การนอน ของแต่ละอาชีพ)</button>
-        <button id="btnStress">Bar chart (avg stress ของแต่ละอาชีพ)</button>
-        <button id="btnQuality">Bar chart (avg quality sleep ของแต่ละอาชีพ)</button>
+  <section class="controls">
+    <button id="btnSleep" class="active">Bar chart (avg การนอน ของแต่ละอาชีพ)</button>
+    <button id="btnStress">Bar chart (avg stress ของแต่ละอาชีพ)</button>
+    <button id="btnQuality">Bar chart (avg quality sleep ของแต่ละอาชีพ)</button>
+  </section>
+
+  <header class="container">
+    <h1 id="heading">Bar Chart ชั่วโมงนอนเฉลี่ยแยกตามอาชีพ</h1>
+    <nav><a href="../index.html">← กลับหน้าแรก</a></nav>
+  </header>
+
+  <main class="container">
+    <section class="chart" style="height:360px;">
+      <canvas id="occupationHistChart"></canvas>
+      <p class="muted" style="margin-top:8px;" id="chartDesc">
+        ค่าเฉลี่ยชั่วโมงการนอนต่อคืน แยกตามอาชีพ (แสดงสีตามความเหมาะสม)
+      </p>
+      <div id="legend" class="legend"></div>
     </section>
-    <header class="container">
-        <h1 id="heading">Bar Chart ชั่วโมงนอนเฉลี่ยแยกตามอาชีพ</h1>
-        <nav><a href="../index.html">← กลับหน้าแรก</a></nav>
-    </header>
-    <main class="container">
-        <section class="chart" style="height:320px;">
-            <canvas id="occupationHistChart"></canvas>
-            <p class="muted" style="margin-top:8px;" id="chartDesc">
-                ค่าเฉลี่ยชั่วโมงการนอนต่อคืน แยกตามอาชีพ
-            </p>
-        </section>
-    </main>
-    <script src="../js/config.js"></script>
-    <script src="../js/api.js"></script>
-    <script>
-        let chartType = "sleep"; // sleep, stress, quality
-        let chartObj = null;
-        let allRows = [];
+  </main>
 
-        function getOccAvg(rows, field, label, color, desc) {
-            // mapping field name ให้ตรงกับ supabase
-            const fieldMap = {
-                duration: ["duration", "Sleep Duration"],
-                stress: ["stress", "Stress Level"],
-                quality: ["quality", "Quality of Sleep"]
-            };
-            const occMap = {};
-            rows.forEach(r => {
-                const occ = r.occupation || r["Occupation"] || "ไม่ระบุ";
-                let val = null;
-                if (fieldMap[field]) {
-                    for (const fname of fieldMap[field]) {
-                        val = r[fname] ?? r[fname.replace(/^\w/, c => c.toUpperCase())];
-                        if (val != null && !isNaN(val)) break;
-                    }
-                } else {
-                    val = r[field] ?? r[field.replace(/^\w/, c => c.toUpperCase())];
-                }
-                if (val == null || isNaN(val)) return;
-                if (!occMap[occ]) occMap[occ] = [];
-                occMap[occ].push(Number(val));
-            });
-            // คำนวณค่าเฉลี่ย
-            let arr = Object.entries(occMap)
-                .filter(([k, v]) => v.length > 2)
-                .map(([k, v]) => ({
-                    label: k,
-                    avg: v.reduce((s, n) => s + n, 0) / v.length
-                }));
-            // เรียงจากมากไปน้อย
-            arr.sort((a, b) => b.avg - a.avg);
-            const labels = arr.map(e => e.label);
-            const data = arr.map(e => e.avg);
-            return { labels, data, label, color, desc };
-        }
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script>
+    let chartType = "sleep"; // sleep, stress, quality
+    let chartObj = null;
+    let allRows = [];
 
-        function renderOccupationHistogram({ labels, data, label, color, desc }) {
-            const ctx = document.getElementById('occupationHistChart');
-            if (!ctx) return;
-            if (chartObj) chartObj.destroy();
-            chartObj = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{
-                        label,
-                        data,
-                        backgroundColor: color
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        title: { display: false }
-                    },
-                    scales: {
-                        x: { title: { display: true, text: 'อาชีพ' } },
-                        y: { title: { display: true, text: label }, beginAtZero: true }
-                    }
-                }
-            });
-            document.getElementById('chartDesc').textContent = desc;
-        }
+    const COLORS = {
+      good: '#16a34a',  // เขียว
+      warn: '#f59e0b',  // ส้ม
+      bad:  '#ef4444',  // แดง
+      base: '#60a5fa'   // fallback
+    };
 
-        function getRandomColor() {
-            const letters = "0123456789abcdef";
-            let color = "#";
-            let colors = [];
-            for (let i = 0; i < 6; i++) {
-                for (let j = 0; j < 6; j++) {
-                    color += letters[Math.floor(Math.random() * 16)];
+    // -------- helpers: ดึงฟิลด์จากหลายชื่อ (รองรับตัวพิมพ์ใหญ่/มีช่องว่าง) --------
+    function pick(obj, names) {
+      for (const n of names) {
+        if (obj[n] != null && obj[n] !== '') return obj[n];
+        const cap = n.replace(/^\w/, c => c.toUpperCase());
+        if (obj[cap] != null && obj[cap] !== '') return obj[cap];
+      }
+      return undefined;
+    }
+
+    // กลุ่มค่าเฉลี่ยต่ออาชีพ
+    function getOccAvg(rows, field) {
+      const fieldMap = {
+        duration: ["duration", "Sleep Duration"],
+        stress:   ["stress", "Stress Level"],
+        quality:  ["quality", "Quality of Sleep"],
+        occupation: ["occupation", "Occupation"]
+      };
+
+      const buckets = {};
+      rows.forEach(r => {
+        const occ = (pick(r, fieldMap.occupation) || "ไม่ระบุ").toString().trim();
+        const vRaw = pick(r, fieldMap[field] || [field]);
+        const v = Number(vRaw);
+        if (!isFinite(v)) return;
+        (buckets[occ] ||= []).push(v);
+      });
+
+      const arr = Object.entries(buckets)
+        .filter(([_, v]) => v.length >= 3)
+        .map(([label, v]) => ({ label, avg: v.reduce((s,n)=>s+n,0) / v.length }))
+        .sort((a,b)=> b.avg - a.avg);
+
+      return arr;
+    }
+
+    // -------- เกณฑ์การลงสี --------
+    function classifySleep(h) { // hours
+      if (h < 6) return { tag: 'น้อยมาก', color: COLORS.bad };
+      if (h >= 7 && h <= 9) return { tag: 'เหมาะสม', color: COLORS.good };
+      return { tag: 'ควรปรับ', color: COLORS.warn }; // 6–<7 หรือ >9
+    }
+    function classifyStress(s) { // 1–10
+      if (s <= 3) return { tag: 'ต่ำ', color: COLORS.good };
+      if (s <= 6) return { tag: 'ปานกลาง', color: COLORS.warn };
+      return { tag: 'สูง', color: COLORS.bad };
+    }
+    function classifyQuality(q) { // 1–10
+      if (q >= 7) return { tag: 'ดี', color: COLORS.good };
+      if (q >= 5) return { tag: 'พอใช้', color: COLORS.warn };
+      return { tag: 'แย่', color: COLORS.bad };
+    }
+
+    function buildLegendHTML(mode) {
+      if (mode === 'sleep') {
+        return `
+          <span><i class="dot" style="background:${COLORS.good}"></i>เหมาะสม (7–9 ชม.)</span>
+          <span><i class="dot" style="background:${COLORS.warn}"></i>ควรปรับ (6–<span style="white-space:nowrap">7</span> หรือ &gt;9 ชม.)</span>
+          <span><i class="dot" style="background:${COLORS.bad}"></i>น้อยมาก (&lt;6 ชม.)</span>
+        `;
+      }
+      if (mode === 'stress') {
+        return `
+          <span><i class="dot" style="background:${COLORS.good}"></i>ต่ำ (1–3)</span>
+          <span><i class="dot" style="background:${COLORS.warn}"></i>ปานกลาง (4–6)</span>
+          <span><i class="dot" style="background:${COLORS.bad}"></i>สูง (7–10)</span>
+        `;
+      }
+      // quality
+      return `
+        <span><i class="dot" style="background:${COLORS.bad}"></i>แย่ (1–4)</span>
+        <span><i class="dot" style="background:${COLORS.warn}"></i>พอใช้ (5–6)</span>
+        <span><i class="dot" style="background:${COLORS.good}"></i>ดี (7–10)</span>
+      `;
+    }
+
+    function renderChart({ labels, data, mode }) {
+      const ctx = document.getElementById('occupationHistChart');
+      if (!ctx) return;
+
+      const categories = [];
+      const colors = data.map(v => {
+        let c;
+        if (mode === 'sleep') { const o = classifySleep(v); categories.push(o.tag); c = o.color; }
+        else if (mode === 'stress') { const o = classifyStress(v); categories.push(o.tag); c = o.color; }
+        else { const o = classifyQuality(v); categories.push(o.tag); c = o.color; }
+        return c;
+      });
+
+      if (chartObj) chartObj.destroy();
+      chartObj = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: mode === 'sleep' ? 'ชั่วโมงนอนเฉลี่ย' :
+                   mode === 'stress' ? 'ความเครียดเฉลี่ย' : 'คุณภาพการนอนเฉลี่ย',
+            data,
+            backgroundColor: colors,
+            borderColor: colors,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const v = ctx.parsed.y;
+                  const cat = categories[ctx.dataIndex];
+                  const unit = mode === 'sleep' ? ' ชม.' : '';
+                  return `${v.toFixed(2)}${unit} • ${cat}`;
                 }
-                colors.push(color);
-                color = "#"
+              }
             }
-            return colors;
-        }
-
-        async function updateChart(type) {
-            let config;
-            const heading = document.getElementById("heading");
-            if (type === "sleep") {
-                config = getOccAvg(allRows, "duration", "ชั่วโมงนอนเฉลี่ย", getRandomColor(), "ค่าเฉลี่ยชั่วโมงการนอนต่อคืน แยกตามอาชีพ");
-                heading.textContent = "Bar Chart ชั่วโมงนอนเฉลี่ยแยกตามอาชีพ";
-            } else if (type === "stress") {
-                config = getOccAvg(allRows, "stress", "ค่าเฉลี่ย Stress", getRandomColor(), "ค่าเฉลี่ย Stress แยกตามอาชีพ");
-                heading.textContent = "Bar Chart ความเครียดเฉลี่ยแยกตามอาชีพ";
-            } else if (type === "quality") {
-                config = getOccAvg(allRows, "quality", "ค่าเฉลี่ย Quality of Sleep", getRandomColor(), "ค่าเฉลี่ย Quality of Sleep แยกตามอาชีพ");
-                heading.textContent = "Bar Chart คุณภาพการนอนเฉลี่ยแยกตามอาชีพ";
+          },
+          scales: {
+            x: { title: { display: true, text: 'อาชีพ' } },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text:
+                mode === 'sleep' ? 'ชั่วโมงนอนเฉลี่ย' :
+                mode === 'stress' ? 'ระดับความเครียดเฉลี่ย' : 'คุณภาพการนอนเฉลี่ย'
+              }
             }
-            renderOccupationHistogram(config);
+          }
         }
+      });
 
-        (async function () {
-            allRows = await fetchAllSessions?.(1000) || [];
-            updateChart("sleep");
+      // อัปเดตคำอธิบาย + legend
+      const desc = document.getElementById('chartDesc');
+      const legend = document.getElementById('legend');
+      if (mode === 'sleep') {
+        desc.textContent = 'ค่าเฉลี่ยชั่วโมงการนอนต่อคืน แยกตามอาชีพ (ลงสีตามเกณฑ์ความเหมาะสม)';
+      } else if (mode === 'stress') {
+        desc.textContent = 'ค่าเฉลี่ยระดับความเครียด แยกตามอาชีพ (เขียว=ต่ำ, แดง=สูง)';
+      } else {
+        desc.textContent = 'ค่าเฉลี่ยคุณภาพการนอน แยกตามอาชีพ (เขียว=ดี, แดง=แย่)';
+      }
+      legend.innerHTML = buildLegendHTML(mode);
+    }
 
-            document.getElementById("btnSleep").onclick = function () {
-                chartType = "sleep";
-                updateChart("sleep");
-                setActiveBtn("btnSleep");
-            };
-            document.getElementById("btnStress").onclick = function () {
-                chartType = "stress";
-                updateChart("stress");
-                setActiveBtn("btnStress");
-            };
-            document.getElementById("btnQuality").onclick = function () {
-                chartType = "quality";
-                updateChart("quality");
-                setActiveBtn("btnQuality");
-            };
-        })();
+    async function updateChart(type) {
+      let rows = allRows;
+      if (rows && !Array.isArray(rows) && Array.isArray(rows.data)) rows = rows.data;
 
-        function setActiveBtn(id) {
-            ["btnSleep", "btnStress", "btnQuality"].forEach(bid => {
-                document.getElementById(bid).classList.toggle("active", bid === id);
-            });
-        }
-    </script>
-    <style>
-        .controls button.active {
-            background: #2563eb;
-            color: #fff;
-        }
-    </style>
+      const heading = document.getElementById('heading');
+      if (type === 'sleep') {
+        const arr = getOccAvg(rows, 'duration');
+        renderChart({ labels: arr.map(e=>e.label), data: arr.map(e=>e.avg), mode: 'sleep' });
+        heading.textContent = 'Bar Chart ชั่วโมงนอนเฉลี่ยแยกตามอาชีพ';
+      } else if (type === 'stress') {
+        const arr = getOccAvg(rows, 'stress');
+        renderChart({ labels: arr.map(e=>e.label), data: arr.map(e=>e.avg), mode: 'stress' });
+        heading.textContent = 'Bar Chart ความเครียดเฉลี่ยแยกตามอาชีพ';
+      } else {
+        const arr = getOccAvg(rows, 'quality');
+        renderChart({ labels: arr.map(e=>e.label), data: arr.map(e=>e.avg), mode: 'quality' });
+        heading.textContent = 'Bar Chart คุณภาพการนอนเฉลี่ยแยกตามอาชีพ';
+      }
+    }
+
+    // init
+    (async function () {
+      allRows = await (fetchAllSessions?.(1000) ?? []);
+      updateChart('sleep');
+      document.getElementById("btnSleep").onclick   = () => { chartType='sleep';   updateChart('sleep');   setActive('btnSleep'); };
+      document.getElementById("btnStress").onclick  = () => { chartType='stress';  updateChart('stress');  setActive('btnStress'); };
+      document.getElementById("btnQuality").onclick = () => { chartType='quality'; updateChart('quality'); setActive('btnQuality'); };
+    })();
+
+    function setActive(id) {
+      ["btnSleep","btnStress","btnQuality"].forEach(b => {
+        document.getElementById(b).classList.toggle('active', b === id);
+      });
+    }
+  </script>
 </body>
-
 </html>
