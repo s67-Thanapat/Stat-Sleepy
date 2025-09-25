@@ -35,19 +35,39 @@
         let allRows = [];
 
         function getOccAvg(rows, field, label, color, desc) {
+            // mapping field name ให้ตรงกับ supabase
+            const fieldMap = {
+                duration: ["duration", "Sleep Duration"],
+                stress: ["stress", "Stress Level"],
+                quality: ["quality", "Quality of Sleep"]
+            };
             const occMap = {};
             rows.forEach(r => {
                 const occ = r.occupation || r["Occupation"] || "ไม่ระบุ";
-                const val = r[field] ?? r[field.replace(/^\w/, c => c.toUpperCase())];
+                let val = null;
+                if (fieldMap[field]) {
+                    for (const fname of fieldMap[field]) {
+                        val = r[fname] ?? r[fname.replace(/^\w/, c => c.toUpperCase())];
+                        if (val != null && !isNaN(val)) break;
+                    }
+                } else {
+                    val = r[field] ?? r[field.replace(/^\w/, c => c.toUpperCase())];
+                }
                 if (val == null || isNaN(val)) return;
                 if (!occMap[occ]) occMap[occ] = [];
                 occMap[occ].push(Number(val));
             });
-            const labels = Object.keys(occMap).filter(k => occMap[k].length > 2);
-            const data = labels.map(k => {
-                const arr = occMap[k];
-                return arr.length ? (arr.reduce((s, v) => s + v, 0) / arr.length) : 0;
-            });
+            // คำนวณค่าเฉลี่ย
+            let arr = Object.entries(occMap)
+                .filter(([k, v]) => v.length > 2)
+                .map(([k, v]) => ({
+                    label: k,
+                    avg: v.reduce((s, n) => s + n, 0) / v.length
+                }));
+            // เรียงจากมากไปน้อย
+            arr.sort((a, b) => b.avg - a.avg);
+            const labels = arr.map(e => e.label);
+            const data = arr.map(e => e.avg);
             return { labels, data, label, color, desc };
         }
 
