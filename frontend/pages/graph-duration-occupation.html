@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ชั่วโมงนอน × อาชีพ (Box plot)</title>
   <link rel="stylesheet" href="../css/styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- ปลั๊กอิน Box/Violin -->
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-box-and-violin-plot@4"></script>
+
+  <!-- Chart.js v4 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <!-- ✅ ปลั๊กอิน Box/Violin สำหรับ Chart.js v4 -->
+  <script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot@4/build/index.umd.min.js"></script>
 </head>
 
 <body>
@@ -20,15 +22,17 @@
     <section class="chart" style="height:360px;">
       <canvas id="boxPlot"></canvas>
       <p class="muted" style="margin-top:8px;">
-        กล่อง: Q1–Q3, เส้นกลาง: มัธยฐาน, จุดสามเหลี่ยม: ค่าเฉลี่ย • แกน Y = ชั่วโมง/คืน
+        กล่อง: Q1–Q3 • เส้นกลาง: มัธยฐาน • ▲: ค่าเฉลี่ย • แกน Y = ชั่วโมง/คืน
       </p>
     </section>
   </main>
 
+  <!-- ใช้ไฟล์เดิมในโปรเจกต์ -->
   <script src="../js/config.js"></script>
   <script src="../js/api.js"></script>
+
   <script>
-    // -------- helpers --------
+    // ---------- helpers ----------
     function groupBy(rows, keyFn, valFn) {
       const m = new Map();
       for (const r of rows) {
@@ -41,7 +45,7 @@
       return m;
     }
     const clampHours = (arr, min=2, max=14) =>
-      arr.filter(x => typeof x === 'number' && isFinite(x) && x>=min && x<=max);
+      arr.filter(x => typeof x === 'number' && isFinite(x) && x >= min && x <= max);
 
     const mean = a => a.length ? a.reduce((s,x)=>s+x,0)/a.length : 0;
     const median = a => {
@@ -51,14 +55,14 @@
     };
 
     function renderBoxPlot(groupMap) {
-      // sort labels by median (desc) เพื่ออ่านง่าย
+      // เรียงกลุ่มตามค่ามัธยฐาน (มาก→น้อย) เพื่ออ่านง่าย
       const entries = [...groupMap.entries()]
-        .map(([label, arr]) => ({label, values: arr, med: median(arr)}))
-        .sort((a,b)=>b.med - a.med);
+        .map(([label, arr]) => ({ label, values: arr, med: median(arr) }))
+        .sort((a,b)=> b.med - a.med);
 
-      const labels = entries.map(e=>e.label);
-      const series = entries.map(e=>e.values);
-      const means  = entries.map(e=>({x: e.label, y: mean(e.values)}));
+      const labels = entries.map(e => e.label);
+      const series = entries.map(e => e.values);
+      const means  = entries.map(e => ({ x: e.label, y: mean(e.values) }));
 
       const ctx = document.getElementById('boxPlot');
       if (ctx._chart) ctx._chart.destroy();
@@ -70,13 +74,12 @@
           datasets: [
             {
               label: 'ชั่วโมงต่อคืน',
-              data: series,
+              data: series,          // array ของ array
               outlierRadius: 3,
               itemRadius: 0
             },
-            // overlay ค่าเฉลี่ยเป็น scatter สามเหลี่ยม
             {
-              type: 'scatter',
+              type: 'scatter',      // ▲ แสดงค่าเฉลี่ยทับบนกล่อง
               label: 'ค่าเฉลี่ย',
               data: means,
               parsing: false,
@@ -105,18 +108,19 @@
       });
     }
 
-    // -------- main --------
+    // ---------- main ----------
     (async function () {
-      const rows = await (fetchAllSessions?.(1000) ?? []);
+      const rows = await (fetchAllSessions?.(1000) ?? []); // ดึงจาก Supabase
       if (!rows.length) return;
 
-      // ใช้ชื่อคอลัมน์ตรง ๆ ตาม Supabase (มีช่องว่าง ใช้ bracket notation)
+      // ใช้ชื่อคอลัมน์ตามตาราง Supabase (มีช่องว่างให้ใช้ bracket notation)
       const grouped = groupBy(
         rows,
         r => String(r['Occupation'] ?? '').trim(),
         r => Number(r['Sleep Duration'])
       );
 
+      // กรองค่าเพี้ยน และลบกลุ่มที่ว่างเปล่า
       for (const [k, arr] of grouped) {
         const cleaned = clampHours(arr);
         if (cleaned.length) grouped.set(k, cleaned);
