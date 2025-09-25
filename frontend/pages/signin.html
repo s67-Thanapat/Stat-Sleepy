@@ -101,20 +101,24 @@
     const msg = document.getElementById("msg");
 
     // ===== helpers =====
-    // แปลง path ให้ถูกทั้งบน http(s) (เช่น Vercel) และ file:// เวลาเปิดไฟล์ตรง
     function toHref(path){
-      const clean = (path || "").replace(/^\/+/, ""); // ตัด / นำหน้า
-      if (location.protocol === "http:" || location.protocol === "https:") {
-        return `/${clean}`; // ชี้จากรูทโดเมน → /admin.html
-      }
-      return clean; // file:// ใช้รีเลทีฟ → admin.html
+      const clean = (path || "").replace(/^\/+/, "");
+      if (location.protocol === "http:" || location.protocol === "https:") return `/${clean}`;
+      return clean;
     }
-
-    // รับ ?next=... ถ้าเป็นลิงก์นอก ให้ผ่านได้; ถ้าไม่ใช่ ให้ normalize ด้วย toHref
     function resolveNext(next, fallback){
       if (next && /^https?:\/\//i.test(next)) return next;
       const v = (next && next.trim()) || fallback || "index.html";
       return toHref(v);
+    }
+    // รอให้ session พร้อม (กันเด้งกลับเพราะ admin.html อ่าน session ไม่ทัน)
+    async function ensureSessionReady(maxTries = 10, delayMs = 150){
+      for (let i=0; i<maxTries; i++){
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.access_token) return true;
+        await new Promise(r => setTimeout(r, delayMs));
+      }
+      return false;
     }
 
     // toggle password
@@ -151,26 +155,25 @@
           return; 
         }
 
-        // ✅ ถ้าอีเมลเป็น admin → ไปหน้า /admin.html (root-relative บน Vercel, relative บน file://)
+        // รอ session พร้อมก่อนค่อยเปลี่ยนหน้า
+        await ensureSessionReady();
+
         const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
         if (isAdmin) {
           msg.style.color = "seagreen";
           msg.textContent = "เข้าสู่ระบบสำเร็จ (Admin) กำลังไปหน้าแอดมิน...";
           setTimeout(() => {
             window.location.replace(toHref("admin.html"));
-          }, 300);
+          }, 200);
           return;
         }
 
-        // ผู้ใช้ทั่วไป → รองรับ ?next=... (ถ้าไม่มี ใช้ /index.html?login=1)
         const nextParam = new URLSearchParams(location.search).get("next");
         const finalUrl = resolveNext(nextParam, "index.html?login=1");
 
         msg.style.color = "seagreen";
         msg.textContent = "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
-        setTimeout(() => {
-          window.location.assign(finalUrl);
-        }, 300);
+        setTimeout(() => { window.location.assign(finalUrl); }, 200);
 
       } catch(err){
         msg.style.color="crimson";
@@ -184,7 +187,7 @@
       e.preventDefault();
       const email = emailEl.value.trim();
       if (!email) { msg.style.color = "crimson"; msg.textContent = "กรุณากรอกอีเมลก่อน"; return; }
-      const redirectTo = `${location.origin}/reset.html`; // ต้องเป็น http(s) เต็มเมื่อใช้งานจริง
+      const redirectTo = `${location.origin}/reset.html`;
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) { msg.style.color="crimson"; msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`; }
       else { msg.style.color="seagreen"; msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว"; }

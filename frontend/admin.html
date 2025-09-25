@@ -29,14 +29,16 @@
     .pill{padding:4px 8px;border-radius:999px;background:#eef2ff;font-weight:600}
     .danger{color:var(--red)}
     .ok{color:var(--green)}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    .progress{height:10px;background:#eef2ff;border-radius:999px;overflow:hidden}
+    .bar{height:100%;background:var(--blue);width:0%}
   </style>
 </head>
 <body>
 <header>แอดมิน • จัดการข้อมูล</header>
 
-<!-- ซ่อนแอปทั้งหมดไว้ก่อน จนกว่าจะผ่านการตรวจสิทธิ์ -->
 <div id="app" class="wrap" style="display:none">
-  <!-- กล่องสถานะผู้ใช้ -->
+  <!-- สถานะผู้ใช้ -->
   <div class="card" id="whoCard">
     <div class="row" style="align-items:center">
       <div>
@@ -49,34 +51,41 @@
     </div>
   </div>
 
-  <!-- โปรไฟล์ -->
+  <!-- ✅ นำเข้าไฟล์ CSV -->
   <div class="card">
-    <h2>โปรไฟล์ผู้ใช้</h2>
-    <div class="row">
-      <input id="display_name" placeholder="ชื่อที่แสดง (ไม่บังคับ)">
-      <input id="height_cm" type="number" step="0.1" placeholder="ส่วนสูง (ซม.)">
-      <input id="weight_kg" type="number" step="0.1" placeholder="น้ำหนัก (กก.)">
-      <input id="age_years" type="number" step="1" placeholder="อายุ (ปี)">
-      <button id="saveProfile" class="btn-green">บันทึกโปรไฟล์</button>
+    <h2>นำเข้าไฟล์ CSV</h2>
+    <div class="row" style="align-items:center">
+      <input id="csvFile" type="file" accept=".csv" />
+      <select id="mapping">
+        <option value="v1">Sleep sessions v1: start_time,end_time,sleep_quality,note</option>
+        <option value="v2">Sleep sessions v2: date,sleep_start,sleep_end,quality,note</option>
+        <option value="health">Health logs: Quality of Sleep, Physical Activity Level, …</option>
+      </select>
+      <label class="checkbox" style="display:flex;align-items:center;gap:8px">
+        <input id="assumeLocal" type="checkbox" checked />
+        เวลาที่อ่านเป็นเวลาเครื่อง (ใช้กับโหมด sessions)
+      </label>
+      <button id="btnParse" class="btn-muted">พรีวิว</button>
+      <button id="btnUpload" class="btn">อัปโหลด</button>
     </div>
-    <div class="muted" id="profileMsg"></div>
+
+    <div class="muted mono" style="margin-top:6px">
+      <b>Health logs</b> ต้องมีอย่างน้อยคอลัมน์: date, quality_of_sleep, physical_activity_level, stress_level, heart_rate, daily_steps, age(หรือ age_years), sleep_duration, gender, blood_pressure(เช่น 120/80), occupation, sleep_disorder, bmi_category
+    </div>
+
+    <div id="csvMsg" class="muted" style="margin-top:10px"></div>
+    <div class="progress" style="margin-top:8px"><div id="progBar" class="bar"></div></div>
+
+    <div id="previewWrap" style="margin-top:12px;display:none">
+      <div class="muted" id="pvTitle">ตัวอย่าง 5 แถวแรกที่จะอัปโหลด</div>
+      <table>
+        <thead id="pvHead"></thead>
+        <tbody id="pvBody"></tbody>
+      </table>
+    </div>
   </div>
 
-  <!-- เพิ่ม session -->
-  <div class="card">
-    <h2>เพิ่มบันทึกการนอน</h2>
-    <div class="row">
-      <input id="start_time" type="datetime-local">
-      <input id="end_time" type="datetime-local">
-      <input id="sleep_quality" type="number" min="1" max="100" placeholder="คุณภาพ (1–100)">
-      <input id="note" placeholder="บันทึก (ไม่บังคับ)">
-      <button id="addSession" class="btn">เพิ่ม</button>
-    </div>
-    <div class="muted">เวลาเป็นเวลาเครื่องของคุณ (local time) — ฝั่งฐานข้อมูลใช้ <code>timestamptz</code></div>
-    <div class="muted" id="addMsg"></div>
-  </div>
-
-  <!-- ตาราง session -->
+  <!-- ตาราง session (ของผู้ใช้ปัจจุบัน) -->
   <div class="card">
     <div class="row" style="align-items:center">
       <h2 style="margin-right:auto">บันทึกการนอน</h2>
@@ -107,14 +116,14 @@
 </div>
 
 <script>
-  // ⬇️ ใช้คีย์โปรเจกต์จริงของคุณ
+  // ===== Supabase =====
   const SUPABASE_URL = "https://nbxuzdrutlvavirpzpjt.supabase.co";
   const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ieHV6ZHJ1dGx2YXZpcnB6cGp0Iiwicm9zZSI6ImFub24iLCJpYXQiOjE3NTgzODUzMDYsImV4cCI6MjA3Mzk2MTMwNn0.tD4noFRKDFcA9x-A5udQSjkhKuXbccPdohdFjd8Fyo4";
-
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
+  const ADMIN_EMAILS = ["ozone.gg55@gmail.com","ozza.tv55@gmail.com"];
 
   let user = null;
   let page = 1;
@@ -123,90 +132,270 @@
 
   const appEl = document.getElementById('app');
   const whoEl = document.getElementById('who');
-  const logoutBtn = document.getElementById('logoutBtn');
 
-  // ===== บังคับสิทธิ์: ต้องล็อกอิน และต้อง is_admin = true =====
+  // ===== Admin gate =====
   async function requireAdmin() {
-    // 1) ต้องมี session
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      location.href = "/pages/signin.html?next=/admin.html";
-      return;
-    }
+    const { data:{ session } } = await supabase.auth.getSession();
+    if (!session) { location.href = "/pages/signin.html?next=/admin.html"; return; }
     user = session.user;
+    if (!ADMIN_EMAILS.includes(user.email.toLowerCase())) { location.href = "/index.html?login=1"; return; }
 
-    // 2) อ่านสิทธิ์จาก profiles (ของตัวเอง)
-    const { data: profile, error: pErr } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .maybeSingle(); // กันกรณีไม่มีแถว
-
-    if (pErr || !profile?.is_admin) {
-      // ไม่ใช่แอดมิน → กลับหน้าแรก
-      location.href = "/index.html?login=1";
-      return;
-    }
-
-    // 3) ผ่านสิทธิ์ → แสดงแอปและโหลดข้อมูล
     appEl.style.display = 'block';
     whoEl.innerHTML = `เข้าสู่ระบบด้วย: <b>${user.email}</b> <span class="ok">• Admin</span>`;
-    await loadProfile();
     await loadSessions();
   }
 
-  // Logout
-  logoutBtn.onclick = async () => {
+  // ===== Logout =====
+  document.getElementById('logoutBtn').onclick = async () => {
     await supabase.auth.signOut();
     location.href = "/pages/signin.html";
   };
 
-  // ===== Profiles CRUD (upsert ค่าของผู้ใช้ปัจจุบัน) =====
-  const profileMsg = document.getElementById('profileMsg');
-  async function loadProfile() {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
+  // ===== CSV Import =====
+  const csvFile = document.getElementById('csvFile');
+  const csvMsg  = document.getElementById('csvMsg');
+  const mappingSel = document.getElementById('mapping');
+  const assumeLocal = document.getElementById('assumeLocal');
+  const pvBody = document.getElementById('pvBody');
+  const pvHead = document.getElementById('pvHead');
+  const previewWrap = document.getElementById('previewWrap');
+  const progBar = document.getElementById('progBar');
+  const pvTitle = document.getElementById('pvTitle');
 
-    if (error && error.code !== 'PGRST116') {
-      profileMsg.textContent = "โหลดโปรไฟล์ไม่สำเร็จ: " + error.message;
-      return;
+  let parsedPayload = []; // rows พร้อม insert
+  let parsedMode = "v1";
+
+  document.getElementById('btnParse').onclick = async () => {
+    parsedPayload = [];
+    progBar.style.width = "0%";
+    csvMsg.textContent = "กำลังอ่านไฟล์...";
+    const file = csvFile.files?.[0];
+    if (!file) { csvMsg.textContent = "กรุณาเลือกไฟล์ .csv"; return; }
+
+    const text = await file.text();
+    const rows = parseCSV(text);
+    if (!rows.length) { csvMsg.textContent = "ไฟล์ว่าง"; return; }
+
+    const header = rows[0].map(h => h.trim().toLowerCase());
+    const bodyRows = rows.slice(1).filter(r => r.some(c => (c||"").trim() !== ""));
+
+    const mode = mappingSel.value; // v1 | v2 | health
+    parsedMode = mode;
+
+    let ok=0, bad=0;
+    for (const r of bodyRows) {
+      try {
+        if (mode === "health") {
+          const obj = mapHealthRow(header, r);
+          if (!obj) { bad++; continue; }
+          parsedPayload.push({ user_id: user.id, ...obj });
+        } else {
+          const obj = (mode === "v1") ? mapV1(header, r) : mapV2(header, r);
+          if (!obj.start_time || !obj.end_time) { bad++; continue; }
+          parsedPayload.push({
+            user_id: user.id,
+            start_time: normalizeDate(obj.start_time, assumeLocal.checked),
+            end_time:   normalizeDate(obj.end_time, assumeLocal.checked),
+            sleep_quality: toInt(obj.sleep_quality),
+            note: emptyNull(obj.note),
+            source: "csv"
+          });
+        }
+        ok++;
+      } catch(e){ bad++; }
     }
-    const p = data || {};
-    document.getElementById('display_name').value = p.display_name || '';
-    document.getElementById('height_cm').value  = p.height_cm ?? '';
-    document.getElementById('weight_kg').value  = p.weight_kg ?? '';
-    document.getElementById('age_years').value  = p.age_years ?? '';
-  }
 
-  document.getElementById('saveProfile').onclick = async () => {
-    profileMsg.textContent = "กำลังบันทึก...";
-    const payload = {
-      id: user.id,
-      display_name: (document.getElementById('display_name').value || null),
-      height_cm: toNum(document.getElementById('height_cm').value),
-      weight_kg: toNum(document.getElementById('weight_kg').value),
-      age_years: toInt(document.getElementById('age_years').value),
-    };
-    const { error } = await supabase.from('profiles').upsert(payload);
-    if (error) profileMsg.textContent = "บันทึกไม่สำเร็จ: " + error.message;
-    else { profileMsg.textContent = "บันทึกแล้ว ✓"; }
+    // พรีวิว
+    previewWrap.style.display = "block";
+    pvBody.innerHTML = "";
+    pvHead.innerHTML = (mode === "health")
+      ? `<tr>
+          <th>#</th><th>date</th><th>quality</th><th>activity</th>
+          <th>stress</th><th>heart</th><th>steps</th>
+          <th>gender</th><th>sleep(hrs)</th><th>BP</th>
+          <th>disorder</th><th>BMI</th>
+        </tr>`
+      : `<tr><th>#</th><th>start_time</th><th>end_time</th><th>sleep_quality</th><th>note</th></tr>`;
+
+    if (mode === "health") {
+      parsedPayload.slice(0,5).forEach((p,i)=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${i+1}</td>
+          <td class="mono">${p.log_date}</td>
+          <td>${p.quality_of_sleep ?? ""}</td>
+          <td>${p.physical_activity_level ?? ""}</td>
+          <td>${p.stress_level ?? ""}</td>
+          <td>${p.heart_rate ?? ""}</td>
+          <td>${p.daily_steps ?? ""}</td>
+          <td>${p.gender ?? ""}</td>
+          <td>${p.sleep_duration_hours ?? ""}</td>
+          <td>${p.bp_systolic ?? ""}/${p.bp_diastolic ?? ""}</td>
+          <td>${p.sleep_disorder ?? ""}</td>
+          <td>${p.bmi_category ?? ""}</td>`;
+        pvBody.appendChild(tr);
+      });
+      pvTitle.textContent = "ตัวอย่าง 5 แถวแรก (health_logs)";
+    } else {
+      parsedPayload.slice(0,5).forEach((p,i)=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${i+1}</td><td class="mono">${p.start_time}</td><td class="mono">${p.end_time}</td><td>${p.sleep_quality??""}</td><td>${p.note??""}</td>`;
+        pvBody.appendChild(tr);
+      });
+      pvTitle.textContent = "ตัวอย่าง 5 แถวแรก (sleep_sessions)";
+    }
+
+    csvMsg.textContent = `อ่านแล้ว ${ok+bad} แถว • แปลงสำเร็จ ${ok} • ข้าม ${bad}`;
   };
 
-  // ===== Sleep sessions CRUD =====
-  const tbody = document.getElementById('tbody');
-  const addMsg = document.getElementById('addMsg');
+  document.getElementById('btnUpload').onclick = async () => {
+    if (!parsedPayload.length) { csvMsg.textContent = "ยังไม่มีข้อมูลพร้อมอัปโหลด (กดพรีวิวก่อน)"; return; }
+    csvMsg.textContent = "กำลังอัปโหลด...";
+    progBar.style.width = "1%";
 
+    const table = (parsedMode === "health") ? "health_logs" : "sleep_sessions";
+    const batchSize = 200;
+    let done = 0, failed = 0;
+
+    for (let i=0; i<parsedPayload.length; i+=batchSize) {
+      const chunk = parsedPayload.slice(i, i+batchSize);
+      const { error } = await supabase.from(table).insert(chunk);
+      if (error) { failed += chunk.length; console.error(error); }
+      else { done += chunk.length; }
+      progBar.style.width = `${Math.round((i+chunk.length)/parsedPayload.length*100)}%`;
+    }
+    csvMsg.textContent = `อัปโหลดเสร็จ • สำเร็จ ${done} แถว • ล้มเหลว ${failed} แถว`;
+    await loadSessions();
+  };
+
+  // ----- CSV helpers -----
+  function parseCSV(text){
+    const rows = []; let row=[], cell="", inQ=false;
+    for (let i=0;i<text.length;i++){
+      const ch=text[i], next=text[i+1];
+      if (inQ){
+        if (ch === '"' && next === '"'){ cell+='"'; i++; continue; }
+        if (ch === '"'){ inQ=false; continue; }
+        cell += ch;
+      }else{
+        if (ch === '"'){ inQ=true; continue; }
+        if (ch === ','){ row.push(cell); cell=""; continue; }
+        if (ch === '\n'){ row.push(cell); rows.push(row); row=[]; cell=""; continue; }
+        if (ch === '\r'){ continue; }
+        cell += ch;
+      }
+    }
+    row.push(cell); rows.push(row);
+    return rows;
+  }
+
+  // Sleep sessions v1
+  function mapV1(header, row){
+    const idx = keyIndex(header, ["start_time","end_time","sleep_quality","note"]);
+    return {
+      start_time: row[idx.start_time] || "",
+      end_time: row[idx.end_time] || "",
+      sleep_quality: row[idx.sleep_quality] || "",
+      note: row[idx.note] || ""
+    };
+  }
+  // Sleep sessions v2
+  function mapV2(header, row){
+    const idx = keyIndex(header, ["date","sleep_start","sleep_end","quality","note"]);
+    const date = (row[idx.date]||"").trim();
+    const s = (row[idx.sleep_start]||"").trim();
+    const e = (row[idx.sleep_end]||"").trim();
+    return {
+      start_time: date && s ? `${date} ${s}` : "",
+      end_time:   date && e ? `${date} ${e}` : "",
+      sleep_quality: row[idx.quality] || "",
+      note: row[idx.note] || ""
+    };
+  }
+
+  // Health logs
+  function mapHealthRow(header, row){
+    const idx = (name) => header.indexOf(name);
+    const get = (name) => { const i=idx(name); return i>=0 ? (row[i]||"").trim() : ""; };
+
+    const genderNorm = (g)=>{
+      const s=(g||"").toLowerCase();
+      if (["m","male","ชาย"].includes(s)) return "Male";
+      if (["f","female","หญิง"].includes(s)) return "Female";
+      return s ? "Other" : null;
+    };
+    const palNorm = (v)=>{
+      const s=(v||"").toLowerCase();
+      if (["low","ต่ำ"].includes(s)) return "Low";
+      if (["moderate","กลาง","ปานกลาง"].includes(s)) return "Moderate";
+      if (["high","สูง"].includes(s)) return "High";
+      return null;
+    };
+    const disorderNorm = (v)=>{
+      const s=(v||"").toLowerCase();
+      if (!s || s==="none" || s==="ไม่มี") return "None";
+      if (s.includes("apnea")) return "Sleep Apnea";
+      if (s.includes("insom")) return "Insomnia";
+      if (s.includes("rls")) return "RLS";
+      return "Other";
+    };
+    const bmiNorm = (v)=>{
+      const s=(v||"").toLowerCase();
+      if (s.startsWith("under")) return "Underweight";
+      if (s.startsWith("normal") || s==="ปกติ") return "Normal";
+      if (s.startsWith("over")) return "Overweight";
+      if (s.startsWith("obese") || s==="อ้วน") return "Obese";
+      return null;
+    };
+
+    // date (จำเป็น)
+    const dateStr = get("date");
+    const d = new Date(dateStr);
+    if (!dateStr || Number.isNaN(d.getTime())) return null;
+
+    // blood pressure "120/80"
+    let bp_systolic=null, bp_diastolic=null;
+    const bp = get("blood_pressure");
+    if (bp && bp.includes("/")){
+      const [s,di] = bp.split("/").map(x=>parseInt(x,10));
+      if (Number.isFinite(s)) bp_systolic = s;
+      if (Number.isFinite(di)) bp_diastolic = di;
+    }
+
+    return {
+      log_date: dateStr,
+      quality_of_sleep: intOrNull(get("quality_of_sleep")),
+      physical_activity_level: palNorm(get("physical_activity_level")),
+      stress_level: intOrNull(get("stress_level")),
+      heart_rate: intOrNull(get("heart_rate")),
+      daily_steps: intOrNull(get("daily_steps")),
+      age_years: intOrNull(get("age")) ?? intOrNull(get("age_years")),
+      sleep_duration_hours: numOrNull(get("sleep_duration")),
+      gender: genderNorm(get("gender")),
+      bp_systolic, bp_diastolic,
+      occupation: emptyNull(get("occupation")),
+      sleep_disorder: disorderNorm(get("sleep_disorder")),
+      bmi_category: bmiNorm(get("bmi_category"))
+    };
+  }
+
+  function keyIndex(header, keys){
+    const out={}; for (const k of keys){ const i=header.indexOf(k); out[k]= i>=0 ? i : -1; } return out;
+  }
+
+  function normalizeDate(v){ // สำหรับ sessions เท่านั้น
+    if (!v) return null;
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return null;
+    return d.toISOString();
+  }
+
+  // ===== ตาราง sessions (ไว้ดูผลหลังอัปโหลด) =====
+  const tbody = document.getElementById('tbody');
   async function loadSessions() {
     tbody.innerHTML = `<tr><td colspan="7" class="center muted">กำลังโหลด...</td></tr>`;
+    const from = (page-1)*pageSize, to = from+pageSize-1;
 
-    const from = (page-1)*pageSize;
-    const to   = from + pageSize - 1;
-
-    // ตัวอย่าง: แสดงเฉพาะของผู้ใช้ปัจจุบัน (แอดมินเอง)
-    // ถ้าต้องการเห็นทั้งหมดให้เอา .eq('user_id', user.id) ออก และต้องมี RLS นโยบายสำหรับ admin
     const { data, error, count } = await supabase
       .from('sleep_sessions')
       .select('id,start_time,end_time,duration_minutes,sleep_quality,note', { count: 'exact' })
@@ -240,54 +429,29 @@
         <td>
           <button class="btn-green" data-act="save" data-id="${r.id}">บันทึก</button>
           <button class="btn-red" data-act="del" data-id="${r.id}">ลบ</button>
-        </td>
-      `;
+        </td>`;
       tbody.appendChild(tr);
     }
   }
 
-  // เพิ่มรายการ
-  document.getElementById('addSession').onclick = async () => {
-    addMsg.textContent = "กำลังเพิ่ม...";
-    const payload = {
-      user_id: user.id,
-      start_time: fromLocalInput(document.getElementById('start_time').value),
-      end_time: fromLocalInput(document.getElementById('end_time').value),
-      sleep_quality: toInt(document.getElementById('sleep_quality').value),
-      note: emptyNull(document.getElementById('note').value),
-      source: 'admin',
-    };
-    if (!payload.start_time || !payload.end_time) {
-      addMsg.textContent = "กรุณาใส่เวลาเริ่ม/จบ"; return;
-    }
-    const { error } = await supabase.from('sleep_sessions').insert(payload);
-    if (error) addMsg.textContent = "เพิ่มไม่สำเร็จ: " + error.message;
-    else { addMsg.textContent = "เพิ่มแล้ว ✓"; clearAddInputs(); await loadSessions(); }
-  };
-
-  // แก้ไข/ลบ
+  // edit/delete
   tbody.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
+    const btn = e.target.closest('button'); if (!btn) return;
     const id = +btn.dataset.id;
     if (btn.dataset.act === 'save') {
-      const tr = btn.closest('tr');
-      const vals = readRow(tr);
-      const payload = {
-        start_time: fromLocalInput(vals.start_time),
-        end_time: fromLocalInput(vals.end_time),
+      const tr = btn.closest('tr'); const vals = readRow(tr);
+      const { error } = await supabase.from('sleep_sessions').update({
+        start_time: new Date(vals.start_time).toISOString(),
+        end_time: new Date(vals.end_time).toISOString(),
         sleep_quality: toInt(vals.sleep_quality),
         note: emptyNull(vals.note)
-      };
-      const { error } = await supabase.from('sleep_sessions').update(payload).eq('id', id).eq('user_id', user.id);
-      if (error) alert("อัปเดตไม่สำเร็จ: " + error.message);
-      else { alert("บันทึกแล้ว"); await loadSessions(); }
+      }).eq('id', id).eq('user_id', user.id);
+      if (error) alert("อัปเดตไม่สำเร็จ: " + error.message); else { alert("บันทึกแล้ว"); await loadSessions(); }
     }
     if (btn.dataset.act === 'del') {
       if (!confirm('ลบรายการนี้?')) return;
       const { error } = await supabase.from('sleep_sessions').delete().eq('id', id).eq('user_id', user.id);
-      if (error) alert("ลบไม่สำเร็จ: " + error.message);
-      else { await loadSessions(); }
+      if (error) alert("ลบไม่สำเร็จ: " + error.message); else { await loadSessions(); }
     }
   });
 
@@ -298,30 +462,16 @@
   };
   document.getElementById('refresh').onclick = loadSessions;
 
-  // ===== Helpers =====
-  function readRow(tr){
-    const obj = {};
-    tr.querySelectorAll('input').forEach(i => obj[i.dataset.k] = i.value);
-    return obj;
-  }
-  function toLocalInput(iso){
-    const d = new Date(iso);
-    const pad = n => String(n).padStart(2,'0');
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
-  function fromLocalInput(localStr){
-    if(!localStr) return null;
-    const d = new Date(localStr);
-    return d.toISOString();
-  }
-  function toInt(v){ const n = parseInt(v,10); return Number.isFinite(n) ? n : null; }
-  function toNum(v){ const n = parseFloat(v); return Number.isFinite(n) ? n : null; }
-  function emptyNull(v){ return v && v.trim() ? v.trim() : null; }
-  function clearAddInputs(){
-    ['start_time','end_time','sleep_quality','note'].forEach(id=>document.getElementById(id).value='');
-  }
+  // ===== Misc helpers =====
+  function readRow(tr){ const obj={}; tr.querySelectorAll('input').forEach(i=>obj[i.dataset.k]=i.value); return obj; }
+  function toLocalInput(iso){ const d=new Date(iso); const pad=n=>String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+  function toInt(v){ const n=parseInt(v,10); return Number.isFinite(n)?n:null; }
+  function intOrNull(v){ const n=parseInt(v,10); return Number.isFinite(n)?n:null; }
+  function numOrNull(v){ const n=parseFloat(v); return Number.isFinite(n)?n:null; }
+  function emptyNull(v){ return v && String(v).trim() ? String(v).trim() : null; }
 
-  // เริ่มต้น: ตรวจสิทธิ์แอดมิน
+  // start
   requireAdmin();
 </script>
 </body>
