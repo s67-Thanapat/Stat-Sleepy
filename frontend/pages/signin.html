@@ -115,10 +115,12 @@
       if(saved){ emailEl.value = saved; rememberEl.checked = true; }
     })();
 
+    // ✅ ให้คืน URL แบบ relative เสมอ (กันพังบน file:// และเมื่อมี <base href="/">)
     function resolveNext(next, fallback){
-      const v = next || fallback || "/index.html";
-      if (/^https?:\/\//i.test(v)) return v;
-      return `${location.origin}${v.startsWith("/") ? v : `/${v}`}`;
+      const v = next || fallback || "index.html";
+      if (/^https?:\/\//i.test(v)) return v;   // อนุญาตลิงก์ภายนอก
+      // ตัดเครื่องหมาย / นำหน้าเพื่อกัน root-absolute
+      return v.replace(/^\/+/, "");
     }
 
     // login
@@ -133,25 +135,41 @@
       if(rememberEl.checked) localStorage.setItem("ss_email", email);
       else localStorage.removeItem("ss_email");
 
-      const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
-      if (signErr) { 
-        msg.style.color="crimson"; 
-        msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`; 
-        return; 
+      try{
+        const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (signErr) { 
+          msg.style.color="crimson"; 
+          msg.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${signErr.message}`; 
+          return; 
+        }
+
+        // ✅ ถ้าอีเมลเป็น admin → ไปหน้า admin.html (relative) ทันที ไม่ผ่าน resolveNext
+        const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+        if (isAdmin) {
+          msg.style.color = "seagreen";
+          msg.textContent = "เข้าสู่ระบบสำเร็จ (Admin) กำลังไปหน้าแอดมิน...";
+          setTimeout(() => {
+            window.location.replace("admin.html"); // กันย้อนกลับ
+          }, 300);
+          return;
+        }
+
+        // ผู้ใช้ทั่วไป → รองรับ ?next=... (ถ้าไม่มี ใช้ index.html?login=1)
+        const nextParam = new URLSearchParams(location.search).get("next");
+        const finalUrl = resolveNext(nextParam, "index.html?login=1");
+
+        msg.style.color = "seagreen";
+        msg.textContent = "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
+        setTimeout(() => {
+          // ใช้ assign สำหรับผู้ใช้ทั่วไป (เผื่ออยากย้อนกลับมาหน้า login)
+          window.location.assign(finalUrl);
+        }, 300);
+
+      } catch(err){
+        msg.style.color="crimson";
+        msg.textContent = `เกิดข้อผิดพลาดไม่คาดคิด: ${err?.message || err}`;
+        console.error(err);
       }
-
-      // ✅ ถ้าอีเมลเป็น admin → ไปหน้า admin.html เลย
-      const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
-      const nextParam = new URLSearchParams(location.search).get("next");
-      const fallback  =  "/admin.html" ;
-      const finalUrl  = resolveNext(nextParam, fallback);
-
-      msg.style.color = "seagreen";
-      msg.textContent = isAdmin
-        ? "เข้าสู่ระบบสำเร็จ (Admin) กำลังไปหน้าแอดมิน..."
-        : "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
-
-      setTimeout(() => { window.location.href = finalUrl; }, 400);
     });
 
     // forgot password
@@ -159,6 +177,7 @@
       e.preventDefault();
       const email = emailEl.value.trim();
       if (!email) { msg.style.color = "crimson"; msg.textContent = "กรุณากรอกอีเมลก่อน"; return; }
+      // ใช้ relative + ตัด / นำหน้าเพื่อความชัวร์บน file://
       const redirectTo = `${location.origin}/reset.html`;
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) { msg.style.color="crimson"; msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`; }
