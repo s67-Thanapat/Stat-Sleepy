@@ -33,6 +33,9 @@
         ค่าเฉลี่ยชั่วโมงการนอนต่อคืน แยกตามอาชีพ (แสดงสีตามความเหมาะสม)
       </p>
       <div id="legend" class="legend"></div>
+      <p class="muted" id="referenceDesc">
+        <a href="https://www.sleepfoundation.org/how-sleep-works/how-much-sleep-do-we-really-need" target="_blank">แหล่งอ้างอิง: National Sleep Foundation</a>
+      </p>
     </section>
   </main>
 
@@ -50,7 +53,6 @@
       base: '#60a5fa'   // fallback
     };
 
-    // -------- helpers: ดึงฟิลด์จากหลายชื่อ (รองรับตัวพิมพ์ใหญ่/มีช่องว่าง) --------
     function pick(obj, names) {
       for (const n of names) {
         if (obj[n] != null && obj[n] !== '') return obj[n];
@@ -60,7 +62,6 @@
       return undefined;
     }
 
-    // กลุ่มค่าเฉลี่ยต่ออาชีพ
     function getOccAvg(rows, field) {
       const fieldMap = {
         duration: ["duration", "Sleep Duration"],
@@ -86,7 +87,6 @@
       return arr;
     }
 
-    // -------- เกณฑ์การลงสี --------
     function classifySleep(h) { // hours
       if (h < 6) return { tag: 'น้อยมาก', color: COLORS.bad };
       if (h >= 7 && h <= 9) return { tag: 'เหมาะสม', color: COLORS.good };
@@ -118,7 +118,6 @@
           <span><i class="dot" style="background:${COLORS.bad}"></i>สูง (7–10)</span>
         `;
       }
-      // quality
       return `
         <span><i class="dot" style="background:${COLORS.bad}"></i>แย่ (1–4)</span>
         <span><i class="dot" style="background:${COLORS.warn}"></i>พอใช้ (5–6)</span>
@@ -182,17 +181,23 @@
         }
       });
 
-      // อัปเดตคำอธิบาย + legend
       const desc = document.getElementById('chartDesc');
       const legend = document.getElementById('legend');
+      const referenceDesc = document.getElementById('referenceDesc');
+
       if (mode === 'sleep') {
         desc.textContent = 'ค่าเฉลี่ยชั่วโมงการนอนต่อคืน แยกตามอาชีพ (ลงสีตามเกณฑ์ความเหมาะสม)';
+        legend.innerHTML = buildLegendHTML(mode);
+        referenceDesc.style.display = 'block';
       } else if (mode === 'stress') {
         desc.textContent = 'ค่าเฉลี่ยระดับความเครียด แยกตามอาชีพ (เขียว=ต่ำ, แดง=สูง)';
+        legend.innerHTML = buildLegendHTML(mode);
+        referenceDesc.style.display = 'none';
       } else {
         desc.textContent = 'ค่าเฉลี่ยคุณภาพการนอน แยกตามอาชีพ (เขียว=ดี, แดง=แย่)';
+        legend.innerHTML = buildLegendHTML(mode);
+        referenceDesc.style.display = 'none';
       }
-      legend.innerHTML = buildLegendHTML(mode);
     }
 
     async function updateChart(type) {
@@ -215,7 +220,6 @@
       }
     }
 
-    // init
     (async function () {
       allRows = await (fetchAllSessions?.(1000) ?? []);
       updateChart('sleep');
