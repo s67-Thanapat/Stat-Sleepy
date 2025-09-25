@@ -43,7 +43,6 @@
     .foot a{color:var(--primary);text-decoration:none}.foot a:hover{text-decoration:underline}
   </style>
 
-  <!-- ใช้ UMD build (window.supabase) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -101,6 +100,23 @@
     const rememberEl = document.getElementById("remember");
     const msg = document.getElementById("msg");
 
+    // ===== helpers =====
+    // แปลง path ให้ถูกทั้งบน http(s) (เช่น Vercel) และ file:// เวลาเปิดไฟล์ตรง
+    function toHref(path){
+      const clean = (path || "").replace(/^\/+/, ""); // ตัด / นำหน้า
+      if (location.protocol === "http:" || location.protocol === "https:") {
+        return `/${clean}`; // ชี้จากรูทโดเมน → /admin.html
+      }
+      return clean; // file:// ใช้รีเลทีฟ → admin.html
+    }
+
+    // รับ ?next=... ถ้าเป็นลิงก์นอก ให้ผ่านได้; ถ้าไม่ใช่ ให้ normalize ด้วย toHref
+    function resolveNext(next, fallback){
+      if (next && /^https?:\/\//i.test(next)) return next;
+      const v = (next && next.trim()) || fallback || "index.html";
+      return toHref(v);
+    }
+
     // toggle password
     document.getElementById("toggle").addEventListener("click", () => {
       const isPwd = passEl.type === "password";
@@ -114,14 +130,6 @@
       const saved = localStorage.getItem("ss_email");
       if(saved){ emailEl.value = saved; rememberEl.checked = true; }
     })();
-
-    // ✅ ให้คืน URL แบบ relative เสมอ (กันพังบน file:// และเมื่อมี <base href="/">)
-    function resolveNext(next, fallback){
-      const v = next || fallback || "index.html";
-      if (/^https?:\/\//i.test(v)) return v;   // อนุญาตลิงก์ภายนอก
-      // ตัดเครื่องหมาย / นำหน้าเพื่อกัน root-absolute
-      return v.replace(/^\/+/, "");
-    }
 
     // login
     form.addEventListener("submit", async (e) => {
@@ -143,25 +151,24 @@
           return; 
         }
 
-        // ✅ ถ้าอีเมลเป็น admin → ไปหน้า admin.html (relative) ทันที ไม่ผ่าน resolveNext
+        // ✅ ถ้าอีเมลเป็น admin → ไปหน้า /admin.html (root-relative บน Vercel, relative บน file://)
         const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
         if (isAdmin) {
           msg.style.color = "seagreen";
           msg.textContent = "เข้าสู่ระบบสำเร็จ (Admin) กำลังไปหน้าแอดมิน...";
           setTimeout(() => {
-            window.location.replace("admin.html"); // กันย้อนกลับ
+            window.location.replace(toHref("admin.html"));
           }, 300);
           return;
         }
 
-        // ผู้ใช้ทั่วไป → รองรับ ?next=... (ถ้าไม่มี ใช้ index.html?login=1)
+        // ผู้ใช้ทั่วไป → รองรับ ?next=... (ถ้าไม่มี ใช้ /index.html?login=1)
         const nextParam = new URLSearchParams(location.search).get("next");
         const finalUrl = resolveNext(nextParam, "index.html?login=1");
 
         msg.style.color = "seagreen";
         msg.textContent = "เข้าสู่ระบบสำเร็จ กำลังกลับหน้าแรก...";
         setTimeout(() => {
-          // ใช้ assign สำหรับผู้ใช้ทั่วไป (เผื่ออยากย้อนกลับมาหน้า login)
           window.location.assign(finalUrl);
         }, 300);
 
@@ -177,8 +184,7 @@
       e.preventDefault();
       const email = emailEl.value.trim();
       if (!email) { msg.style.color = "crimson"; msg.textContent = "กรุณากรอกอีเมลก่อน"; return; }
-      // ใช้ relative + ตัด / นำหน้าเพื่อความชัวร์บน file://
-      const redirectTo = `${location.origin}/reset.html`;
+      const redirectTo = `${location.origin}/reset.html`; // ต้องเป็น http(s) เต็มเมื่อใช้งานจริง
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) { msg.style.color="crimson"; msg.textContent = `ส่งลิงก์รีเซ็ตไม่สำเร็จ: ${error.message}`; }
       else { msg.style.color="seagreen"; msg.textContent = "ส่งลิงก์ตั้งรหัสผ่านไปที่อีเมลแล้ว"; }
