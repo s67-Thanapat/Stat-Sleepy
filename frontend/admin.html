@@ -375,14 +375,14 @@
   function normalizeDate(v){ if (!v) return null; const d=new Date(v); if (Number.isNaN(d.getTime())) return null; return d.toISOString(); }
   function nz(v){ return (v==null ? "" : v); }
 
-  // ===== ตาราง Health Logs (อ่านอย่างเดียว) =====
+  // ===== ตาราง sleep_sessions (อ่านอย่างเดียว) =====
   const tbody = document.getElementById('tbody');
   async function loadSessions() {
     tbody.innerHTML = `<tr><td colspan="13" class="center muted">กำลังโหลด...</td></tr>`;
     const from = (page-1)*pageSize, to = from+pageSize-1;
 
     const { data, error, count } = await supabase
-      .from('health_logs')
+      .from('sleep_sessions')
       .select(`
         "Person ID",
         "Quality of Sleep",
