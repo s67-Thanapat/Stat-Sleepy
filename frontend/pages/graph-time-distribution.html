@@ -12,14 +12,13 @@
 
 <body>
     <header class="container">
-        <h1>กระจายช่วงเวลานอน</h1>
+        <h1 id="heading">กระจายช่วงเวลานอน (อายุ)</h1>
         <nav><a href="../index.html">← กลับหน้าแรก</a></nav>
     </header>
     <main class="container">
-        <section class="chart" style="height:320px;">
+        <section class="chart" style="width:100%;">
             <canvas id="scatterChart"></canvas>
             <div id="occFilter" style="margin:12px 0 0 0; display:flex; flex-wrap:wrap; gap:8px;"></div>
-            <p class="muted" style="margin-top:8px;">จำนวนครั้งที่เริ่มนอนในแต่ละชั่วโมง</p>
         </section>
     </main>
     <script src="../js/config.js"></script>
@@ -29,6 +28,7 @@
         let allRows = [];
         let mode = "age";
         let showRegression = true;
+        let showScatter = true;
         let occList = [];
         let occShow = {};
 
@@ -36,6 +36,14 @@
             if (!bp) return null;
             const m = String(bp).match(/^(\d+)/);
             return m ? Number(m[1]) : null;
+        }
+
+        function parseBMI(bmi) {
+            if (!bmi) return null;
+            if (bmi === "Underweight") return Math.random() * (18.5 - 0) + 0;
+            else if (bmi === "Normal weight") return Math.random() * (24.9 - 18.51) + 18.51;
+            else if (bmi === "Overweight") return Math.random() * (29.9 - 25) + 25;
+            else if (bmi === "Obese") return Math.random() * (40 - 30) + 30;
         }
 
         function getColor(idx) {
@@ -53,8 +61,12 @@
                 let x = null;
                 if (mode === "age") {
                     x = r.age ?? r["Age"];
-                } else {
+                } else if (mode === "bp") {
                     x = parseBP(r.bloodPressure ?? r["Blood Pressure"]);
+                } else if (mode === "stress") {
+                    x = r.stress ?? r["Stress Level"];
+                } else {
+                    x = parseBMI(r.bmi ?? r["BMI"]);
                 }
                 const y = r.duration ?? r["Sleep Duration"];
                 if (x != null && y != null && !isNaN(x) && !isNaN(y)) {
@@ -139,14 +151,22 @@
                         x: {
                             title: {
                                 display: true,
-                                text: mode === "age" ? "อายุ" : "ความดันโลหิต (Systolic)"
+                                text: () => {
+                                    if (mode === "age") return "อายุ (ปี)";
+                                    if (mode === "bp") return "ความดันโลหิต Systolic (mmHg)";
+                                    if (mode === "stress") return "ระดับความเครียด (1-10)";
+                                    if (mode === "BMI") return "ดัชนีมวลกาย (BMI)";
+                                    return "";
+                                }
                             }
                         },
                         y: {
                             title: {
                                 display: true,
                                 text: "ชั่วโมงนอนเฉลี่ย"
-                            }
+                            },
+                            grace: '10%'
+
                         }
                     }
                 }
@@ -158,6 +178,15 @@
                 allRows = await fetchAllSessions?.(1000) || [];
             }
             renderScatterWithRegressionByOcc(allRows, mode, showRegression);
+            if (chartObj) {
+                chartObj.data.datasets.forEach(ds => {
+                    if (ds.type !== "line") {
+                        ds.hidden = !showScatter;
+                    }
+                });
+                chartObj.update();
+            }
+
         }
 
         (async function () {
@@ -174,13 +203,23 @@
             // เพิ่มปุ่มเลือก mode และปุ่มโชว์/ซ่อน regression
             const controls = document.createElement("section");
             controls.className = "controls";
-            controls.style = "margin:16px 0; display:flex; gap:8px; justify-content:center;";
+            controls.style = "margin:16px 0; display:flex; flex-wrap: wrap;gap:6px; justify-content:center;";
             controls.innerHTML = `
                 <button id="btnAge" class="active">Linear Regression (ชั่วโมงนอนเฉลี่ย vs อายุ)</button>
                 <button id="btnBP">Linear Regression (ชั่วโมงนอนเฉลี่ย vs ความดันโลหิต Systolic)</button>
-                <button id="btnToggleReg" class="toggle-reg on">ซ่อนเส้น Regression</button>
+                <button id="btnStress">Linear Regression (ชั่วโมงนอนเฉลี่ย vs ระดับความเครียด)</button>
+                <button id="btnBMI">Linear Regression (ชั่วโมงนอนเฉลี่ย vs ดัชนีมวลกาย)</button>
             `;
             document.body.insertBefore(controls, document.body.querySelector("header"));
+
+            const toggle = document.createElement("section");
+            toggle.className = "controls";
+            toggle.style = "margin:16px 0; display:grid; gap:8px; justify-content:center;";
+            toggle.innerHTML = `
+                <button id="btnToggleReg" class="toggle on">ซ่อนเส้น Regression</button>
+                <button id="btnToggleScatter" class="toggle on">ซ่อนจุดกระจาย</button>
+            `;
+            document.body.insertBefore(toggle, document.body.querySelector("main"));
 
             document.getElementById("btnAge").onclick = function () {
                 mode = "age";
@@ -192,6 +231,7 @@
                 renderOccFilter(occList, occShow, updateChart);
                 updateChart();
                 setActiveBtn("btnAge");
+                document.getElementById("heading").textContent = "กระจายช่วงเวลานอน (อายุ)";
             };
             document.getElementById("btnBP").onclick = function () {
                 mode = "bp";
@@ -202,6 +242,7 @@
                 renderOccFilter(occList, occShow, updateChart);
                 updateChart();
                 setActiveBtn("btnBP");
+                document.getElementById("heading").textContent = "กระจายช่วงเวลานอน (ความดันโลหิต)";
             };
             document.getElementById("btnToggleReg").onclick = function () {
                 showRegression = !showRegression;
@@ -209,9 +250,43 @@
                 this.textContent = showRegression ? "ซ่อนเส้น Regression" : "แสดงเส้น Regression";
                 this.classList.toggle("on", showRegression);
             };
-
+            document.getElementById("btnToggleScatter").onclick = function () {
+                showScatter = !showScatter;
+                if (chartObj) {
+                    chartObj.data.datasets.forEach(ds => {
+                        if (ds.type !== "line") {
+                            ds.hidden = !showScatter;
+                        }
+                    });
+                    chartObj.update();
+                }
+                this.textContent = showScatter ? "ซ่อนจุดกระจาย" : "แสดงจุดกระจาย";
+                this.classList.toggle("on", showScatter);
+            };
+            document.getElementById("btnStress").onclick = function () {
+                mode = "stress";
+                const occMap = getScatterByOccupation(allRows, mode);
+                occList = Object.keys(occMap);
+                occShow = {};
+                occList.forEach(occ => occShow[occ] = true);
+                renderOccFilter(occList, occShow, updateChart);
+                updateChart();
+                setActiveBtn("btnStress");
+                document.getElementById("heading").textContent = "กระจายช่วงเวลานอน (ระดับความเครียด)";
+            }
+            document.getElementById("btnBMI").onclick = function () {
+                mode = "BMI";
+                const occMap = getScatterByOccupation(allRows, mode);
+                occList = Object.keys(occMap);
+                occShow = {};
+                occList.forEach(occ => occShow[occ] = true);
+                renderOccFilter(occList, occShow, updateChart);
+                updateChart();
+                setActiveBtn("btnBMI");
+                document.getElementById("heading").textContent = "กระจายช่วงเวลานอน (BMI)";
+            }
             function setActiveBtn(id) {
-                ["btnAge", "btnBP"].forEach(bid => {
+                ["btnAge", "btnBP", "btnStress", "btnBMI"].forEach(bid => {
                     document.getElementById(bid).classList.toggle("active", bid === id);
                 });
             }
@@ -223,7 +298,7 @@
             color: #fff;
         }
 
-        .controls button.toggle-reg.on {
+        .controls button.toggle.on {
             background: #fbbf24;
             color: #222;
         }
