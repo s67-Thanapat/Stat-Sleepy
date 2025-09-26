@@ -21,7 +21,7 @@
     .btn-red{background:var(--red);color:#fff;border:none}
     .btn-green{background:var(--green);color:#fff;border:none}
     table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{border-top:1px solid #eef0f4;padding:8px 10px;text-align:left;font-size:14px}
+    th,td{border-top:1px solid #eef0f4;padding:8px 10px;text-align:left;font-size:14px;vertical-align:top}
     th{background:#fafbff}
     .right{margin-left:auto}
     .muted{color:var(--muted);font-size:13px}
@@ -85,26 +85,32 @@
     </div>
   </div>
 
-  <!-- ตาราง session (ของผู้ใช้ปัจจุบัน) -->
+  <!-- ตาราง Health Logs -->
   <div class="card">
     <div class="row" style="align-items:center">
-      <h2 style="margin-right:auto">บันทึกการนอน</h2>
+      <h2 style="margin-right:auto">Health Logs (อ่านอย่างเดียว)</h2>
       <button id="refresh" class="btn-muted">รีโหลด</button>
     </div>
     <table id="tbl">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>เริ่ม</th>
-          <th>จบ</th>
-          <th>นาที</th>
-          <th>คุณภาพ</th>
-          <th>โน้ต</th>
-          <th>จัดการ</th>
+          <th>Person ID</th>
+          <th>Quality of Sleep</th>
+          <th>Physical Activity Level</th>
+          <th>Stress Level</th>
+          <th>Heart Rate</th>
+          <th>Daily Steps</th>
+          <th>Age</th>
+          <th>Sleep Duration</th>
+          <th>Gender</th>
+          <th>Blood Pressure</th>
+          <th>Occupation</th>
+          <th>Sleep Disorder</th>
+          <th>BMI Category</th>
         </tr>
       </thead>
       <tbody id="tbody">
-        <tr><td colspan="7" class="center muted">กำลังโหลด...</td></tr>
+        <tr><td colspan="13" class="center muted">กำลังโหลด...</td></tr>
       </tbody>
     </table>
     <div class="row" style="margin-top:8px">
@@ -150,7 +156,7 @@
     location.href = "/pages/signin.html";
   };
 
-  // ===== CSV Import =====
+  // ===== CSV Import (เหมือนเดิม) =====
   const csvFile = document.getElementById('csvFile');
   const csvMsg  = document.getElementById('csvMsg');
   const mappingSel = document.getElementById('mapping');
@@ -175,7 +181,6 @@
     const rows = parseCSV(text);
     if (!rows.length) { csvMsg.textContent = "ไฟล์ว่าง"; return; }
 
-    // เก็บทั้งหัวจริง (raw) และหัวตัวพิมพ์เล็ก (lc) เพื่อ map ได้ยืดหยุ่น
     const headerRaw = rows[0].map(h => h.trim());
     const headerLC  = rows[0].map(h => h.trim().toLowerCase());
     const bodyRows = rows.slice(1).filter(r => r.some(c => (c||"").trim() !== ""));
@@ -188,7 +193,6 @@
       try {
         if (mode === "health") {
           const obj = mapHealthRowSpaced(headerRaw, headerLC, r);
-          // ไม่ใส่ user_id / log_date เพราะตารางเดิมไม่มี
           parsedPayload.push(obj);
         } else {
           const obj = (mode === "v1") ? mapV1(headerLC, r) : mapV2(headerLC, r);
@@ -352,7 +356,6 @@
       "BMI Category": emptyNull(getRaw("BMI Category","bmi_category"))
     };
 
-    // เลือด: รองรับทั้ง blood_pressure หรือแยก systolic/diastolic
     const bpRaw = getRaw("Blood Pressure","blood_pressure");
     if (bpRaw){
       out["Blood Pressure"] = bpRaw;
@@ -369,30 +372,36 @@
     const out={}; for (const k of keys){ const i=headerLC.indexOf(k); out[k]= i>=0 ? i : -1; } return out;
   }
 
-  function normalizeDate(v){ // สำหรับ sessions เท่านั้น
-    if (!v) return null;
-    const d = new Date(v);
-    if (Number.isNaN(d.getTime())) return null;
-    return d.toISOString();
-  }
-
+  function normalizeDate(v){ if (!v) return null; const d=new Date(v); if (Number.isNaN(d.getTime())) return null; return d.toISOString(); }
   function nz(v){ return (v==null ? "" : v); }
 
-  // ===== ตาราง sessions (ไว้ดูผลหลังอัปโหลด) =====
+  // ===== ตาราง Health Logs (อ่านอย่างเดียว) =====
   const tbody = document.getElementById('tbody');
   async function loadSessions() {
-    tbody.innerHTML = `<tr><td colspan="7" class="center muted">กำลังโหลด...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="13" class="center muted">กำลังโหลด...</td></tr>`;
     const from = (page-1)*pageSize, to = from+pageSize-1;
 
     const { data, error, count } = await supabase
-      .from('sleep_sessions')
-      .select('id,start_time,end_time,duration_minutes,sleep_quality,note', { count: 'exact' })
-      .eq('user_id', user.id)
-      .order('start_time', { ascending: false })
+      .from('health_logs')
+      .select(`
+        "Person ID",
+        "Quality of Sleep",
+        "Physical Activity Level",
+        "Stress Level",
+        "Heart Rate",
+        "Daily Steps",
+        "Age",
+        "Sleep Duration",
+        "Gender",
+        "Blood Pressure",
+        "Occupation",
+        "Sleep Disorder",
+        "BMI Category"
+      `, { count: 'exact' })
       .range(from, to);
 
     if (error) {
-      tbody.innerHTML = `<tr><td colspan="7" class="danger">โหลดรายการไม่สำเร็จ: ${error.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="13" class="danger">โหลดรายการไม่สำเร็จ: ${error.message}</td></tr>`;
       return;
     }
 
@@ -400,7 +409,7 @@
     document.getElementById('pageInfo').textContent = `หน้า ${page} / ${Math.max(1, Math.ceil(total/pageSize))}`;
 
     if (!data || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="center muted">ยังไม่มีข้อมูล</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="13" class="center muted">ยังไม่มีข้อมูล</td></tr>`;
       return;
     }
 
@@ -408,41 +417,25 @@
     for (const r of data) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${r.id}</td>
-        <td><input type="datetime-local" value="${toLocalInput(r.start_time)}" data-k="start_time"></td>
-        <td><input type="datetime-local" value="${toLocalInput(r.end_time)}" data-k="end_time"></td>
-        <td class="muted">${r.duration_minutes ?? ''}</td>
-        <td><input type="number" min="1" max="100" value="${r.sleep_quality ?? ''}" data-k="sleep_quality" style="width:90px"></td>
-        <td><input value="${r.note??''}" data-k="note" style="min-width:220px"></td>
-        <td>
-          <button class="btn-green" data-act="save" data-id="${r.id}">บันทึก</button>
-          <button class="btn-red" data-act="del" data-id="${r.id}">ลบ</button>
-        </td>`;
+        <td>${nz(r["Person ID"])}</td>
+        <td>${nz(r["Quality of Sleep"])}</td>
+        <td>${nz(r["Physical Activity Level"])}</td>
+        <td>${nz(r["Stress Level"])}</td>
+        <td>${nz(r["Heart Rate"])}</td>
+        <td>${nz(r["Daily Steps"])}</td>
+        <td>${nz(r["Age"])}</td>
+        <td>${nz(r["Sleep Duration"])}</td>
+        <td>${nz(r["Gender"])}</td>
+        <td class="mono">${nz(r["Blood Pressure"])}</td>
+        <td>${nz(r["Occupation"])}</td>
+        <td>${nz(r["Sleep Disorder"])}</td>
+        <td>${nz(r["BMI Category"])}</td>
+      `;
       tbody.appendChild(tr);
     }
   }
 
-  // edit/delete
-  tbody.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button'); if (!btn) return;
-    const id = +btn.dataset.id;
-    if (btn.dataset.act === 'save') {
-      const tr = btn.closest('tr'); const vals = readRow(tr);
-      const { error } = await supabase.from('sleep_sessions').update({
-        start_time: new Date(vals.start_time).toISOString(),
-        end_time: new Date(vals.end_time).toISOString(),
-        sleep_quality: toInt(vals.sleep_quality),
-        note: emptyNull(vals.note)
-      }).eq('id', id).eq('user_id', user.id);
-      if (error) alert("อัปเดตไม่สำเร็จ: " + error.message); else { alert("บันทึกแล้ว"); await loadSessions(); }
-    }
-    if (btn.dataset.act === 'del') {
-      if (!confirm('ลบรายการนี้?')) return;
-      const { error } = await supabase.from('sleep_sessions').delete().eq('id', id).eq('user_id', user.id);
-      if (error) alert("ลบไม่สำเร็จ: " + error.message); else { await loadSessions(); }
-    }
-  });
-
+  // เปลี่ยนหน้า
   document.getElementById('prev').onclick = () => { if (page>1){ page--; loadSessions(); } };
   document.getElementById('next').onclick = () => {
     const last = Math.max(1, Math.ceil(total/pageSize));
