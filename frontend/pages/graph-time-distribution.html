@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
 </head>
 
-<body>
+<body style="margin: 0;">
     <header class="container">
         <h1 id="heading">กระจายช่วงเวลานอน (อายุ)</h1>
         <nav><a href="../index.html">← กลับหน้าแรก</a></nav>
     </header>
     <main class="container">
-        <section class="chart" style="width:100%;">
+        <section class="chart" style="width:100%; height: calc(100vh - 180px);">
             <canvas id="scatterChart"></canvas>
             <div id="occFilter" style="margin:12px 0 0 0; display:flex; flex-wrap:wrap; gap:8px;"></div>
         </section>
@@ -112,7 +112,7 @@
                     data: points,
                     backgroundColor: color,
                     showLine: false,
-                    pointRadius: 4,
+                    pointRadius: 3,
                     order: 1
                 });
                 // Regression line (ถ้าเลือกให้แสดง)
@@ -147,6 +147,7 @@
                     plugins: {
                         legend: { display: true }
                     },
+                    maintainAspectRatio: false,
                     scales: {
                         x: {
                             title: {
@@ -165,7 +166,7 @@
                                 display: true,
                                 text: "ชั่วโมงนอนเฉลี่ย"
                             },
-                            grace: '10%'
+                            grace: '20%'
 
                         }
                     }
@@ -293,6 +294,11 @@
         })();
     </script>
     <style>
+        header,
+        main {
+            padding: 8px 12px;
+        }
+
         .controls button.active {
             background: #2563eb;
             color: #fff;
