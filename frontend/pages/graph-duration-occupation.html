@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="th">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -19,7 +20,7 @@
   </header>
 
   <main class="container">
-    <section class="chart" style="height:360px;">
+    <section class="chart" style="height: calc(100vh - 180px);">
       <!-- สำคัญ: id ต้องตรงกับในสคริปต์ -->
       <canvas id="boxPlot"></canvas>
       <p class="muted" style="margin-top:8px;">
@@ -44,6 +45,15 @@
       return null;
     }
 
+    function filterOccupation(occ) {
+      if (!occ) return "ไม่ระบุ";
+      const checkOcc = occ.toLowerCase();
+      if (checkOcc.includes("engineer")) return "Engineer";
+      if (checkOcc.includes("sales")) return "Sales";
+      if (checkOcc === "manager") return null;
+      return occ;
+    }
+
     function groupBy(rows, keyFn, valFn) {
       const m = new Map();
       for (const r of rows) {
@@ -56,24 +66,24 @@
       return m;
     }
 
-    const clampHours = (arr, min=2, max=14) =>
+    const clampHours = (arr, min = 2, max = 14) =>
       arr.filter(x => typeof x === 'number' && isFinite(x) && x >= min && x <= max);
 
-    const mean = a => a.length ? a.reduce((s,x)=>s+x,0)/a.length : 0;
+    const mean = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
     const median = a => {
       if (!a.length) return 0;
-      const s = [...a].sort((x,y)=>x-y), n=s.length, m=Math.floor(n/2);
-      return n%2 ? s[m] : (s[m-1]+s[m])/2;
+      const s = [...a].sort((x, y) => x - y), n = s.length, m = Math.floor(n / 2);
+      return n % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
     };
 
     function renderBoxPlot(groupMap) {
       const entries = [...groupMap.entries()]
         .map(([label, values]) => ({ label, values, med: median(values) }))
-        .sort((a,b)=> b.med - a.med);
+        .sort((a, b) => b.med - a.med);
 
       const labels = entries.map(e => e.label);
       const series = entries.map(e => e.values);
-      const means  = entries.map(e => ({ x: e.label, y: mean(e.values) }));
+      const means = entries.map(e => ({ x: e.label, y: mean(e.values) }));
 
       // --- หา/สร้าง canvas แบบปลอดภัย ---
       let canvas = document.getElementById('boxPlot');
@@ -113,6 +123,7 @@
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
             title: { display: true, text: 'Boxplot: Sleep Duration by Occupation' },
@@ -122,8 +133,8 @@
             x: { ticks: { maxRotation: 60, minRotation: 30 } },
             y: {
               title: { display: true, text: 'Hours' },
-              suggestedMin: 4,
-              suggestedMax: 10
+              min: 5,
+              grace: '20%'
             }
           }
         }
@@ -143,8 +154,8 @@
 
       const sample = rows[0];
       // หา key จริงที่มีในอ็อบเจ็กต์ โดยยอมรับ alias หลายแบบ
-      const occKey = findKey(sample, ['Occupation','job','role','profession','อาชีพ']);
-      const durKey = findKey(sample, ['Sleep Duration','sleep_duration','sleepHours','hours','duration','ชั่วโมงนอน']);
+      const occKey = findKey(sample, ['Occupation', 'job', 'role', 'profession', 'อาชีพ']);
+      const durKey = findKey(sample, ['Sleep Duration', 'sleep_duration', 'sleepHours', 'hours', 'duration', 'ชั่วโมงนอน']);
 
       console.log('[boxplot] detected keys ->', { occKey, durKey });
       if (!occKey || !durKey) {
@@ -155,7 +166,7 @@
 
       const grouped = groupBy(
         rows,
-        r => String(r[occKey] ?? '').trim(),
+        r => filterOccupation((r[occKey] ?? '').trim()),
         r => Number(r[durKey])
       );
 
@@ -171,4 +182,5 @@
     });
   </script>
 </body>
+
 </html>

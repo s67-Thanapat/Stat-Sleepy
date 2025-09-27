@@ -53,11 +53,21 @@
             ];
             return palette[idx % palette.length];
         }
+        
+        function filterOccupation(occ){
+            if (!occ) return "ไม่ระบุ";
+            const checkOcc = occ.toLowerCase();
+            if (checkOcc.includes("engineer")) return "Engineer";
+            if (checkOcc.includes("sales")) return "Sales";
+            if (checkOcc === "manager") return null;
+            return occ;
+        }
 
         function getScatterByOccupation(rows, mode) {
             const occMap = {};
             rows.forEach(r => {
-                const occ = r.occupation || r["Occupation"] || "ไม่ระบุ";
+                const occRaw = r.occupation || r["Occupation"] || "ไม่ระบุ";
+                const occ = filterOccupation(occRaw);
                 let x = null;
                 if (mode === "age") {
                     x = r.age ?? r["Age"];

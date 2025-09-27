@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="th">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -7,10 +8,37 @@
   <link rel="stylesheet" href="../css/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
-    .controls { margin-top:16px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
-    .controls button.active { background:#2563eb; color:#fff; }
-    .legend { display:flex; gap:16px; align-items:center; justify-content:center; margin:8px 0 0; font-size:0.95rem; flex-wrap:wrap; }
-    .legend .dot { width:14px; height:14px; border-radius:3px; display:inline-block; margin-right:6px; vertical-align:middle; }
+    .controls {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .controls button.active {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .legend {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      margin: 8px 0 0;
+      font-size: 0.95rem;
+      flex-wrap: wrap;
+    }
+
+    .legend .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
   </style>
 </head>
 
@@ -34,7 +62,8 @@
       </p>
       <div id="legend" class="legend"></div>
       <p class="muted" id="referenceDesc">
-        <a href="https://www.sleepfoundation.org/how-sleep-works/how-much-sleep-do-we-really-need" target="_blank">แหล่งอ้างอิง: National Sleep Foundation</a>
+        <a href="https://www.sleepfoundation.org/how-sleep-works/how-much-sleep-do-we-really-need"
+          target="_blank">แหล่งอ้างอิง: National Sleep Foundation</a>
       </p>
     </section>
   </main>
@@ -49,7 +78,7 @@
     const COLORS = {
       good: '#16a34a',  // เขียว
       warn: '#f59e0b',  // ส้ม
-      bad:  '#ef4444',  // แดง
+      bad: '#ef4444',  // แดง
       base: '#60a5fa'   // fallback
     };
 
@@ -65,14 +94,16 @@
     function getOccAvg(rows, field) {
       const fieldMap = {
         duration: ["duration", "Sleep Duration"],
-        stress:   ["stress", "Stress Level"],
-        quality:  ["quality", "Quality of Sleep"],
+        stress: ["stress", "Stress Level"],
+        quality: ["quality", "Quality of Sleep"],
         occupation: ["occupation", "Occupation"]
       };
 
+
+
       const buckets = {};
       rows.forEach(r => {
-        const occ = (pick(r, fieldMap.occupation) || "ไม่ระบุ").toString().trim();
+        const occ = filterOccupation((pick(r, fieldMap.occupation) || "ไม่ระบุ").toString().trim());
         const vRaw = pick(r, fieldMap[field] || [field]);
         const v = Number(vRaw);
         if (!isFinite(v)) return;
@@ -81,12 +112,20 @@
 
       const arr = Object.entries(buckets)
         .filter(([_, v]) => v.length >= 3)
-        .map(([label, v]) => ({ label, avg: v.reduce((s,n)=>s+n,0) / v.length }))
-        .sort((a,b)=> b.avg - a.avg);
+        .map(([label, v]) => ({ label, avg: v.reduce((s, n) => s + n, 0) / v.length }))
+        .sort((a, b) => b.avg - a.avg);
 
       return arr;
     }
 
+    function filterOccupation(occ) {
+      if (!occ) return "ไม่ระบุ";
+      const checkOcc = occ.toLowerCase();
+      if (checkOcc.includes("engineer")) return "Engineer";
+      if (checkOcc.includes("sales")) return "Sales";
+      if (checkOcc === "manager") return null;
+      return occ;
+    }
     function classifySleep(h) { // hours
       if (h < 6) return { tag: 'น้อยมาก', color: COLORS.bad };
       if (h >= 7 && h <= 9) return { tag: 'เหมาะสม', color: COLORS.good };
@@ -145,7 +184,7 @@
           labels,
           datasets: [{
             label: mode === 'sleep' ? 'ชั่วโมงนอนเฉลี่ย' :
-                   mode === 'stress' ? 'ความเครียดเฉลี่ย' : 'คุณภาพการนอนเฉลี่ย',
+              mode === 'stress' ? 'ความเครียดเฉลี่ย' : 'คุณภาพการนอนเฉลี่ย',
             data,
             backgroundColor: colors,
             borderColor: colors,
@@ -172,9 +211,10 @@
             x: { title: { display: true, text: 'อาชีพ' } },
             y: {
               beginAtZero: true,
-              title: { display: true, text:
-                mode === 'sleep' ? 'ชั่วโมงนอนเฉลี่ย' :
-                mode === 'stress' ? 'ระดับความเครียดเฉลี่ย' : 'คุณภาพการนอนเฉลี่ย'
+              title: {
+                display: true, text:
+                  mode === 'sleep' ? 'ชั่วโมงนอนเฉลี่ย' :
+                    mode === 'stress' ? 'ระดับความเครียดเฉลี่ย' : 'คุณภาพการนอนเฉลี่ย'
               }
             }
           }
@@ -207,15 +247,15 @@
       const heading = document.getElementById('heading');
       if (type === 'sleep') {
         const arr = getOccAvg(rows, 'duration');
-        renderChart({ labels: arr.map(e=>e.label), data: arr.map(e=>e.avg), mode: 'sleep' });
+        renderChart({ labels: arr.map(e => e.label), data: arr.map(e => e.avg), mode: 'sleep' });
         heading.textContent = 'Bar Chart ชั่วโมงนอนเฉลี่ยแยกตามอาชีพ';
       } else if (type === 'stress') {
         const arr = getOccAvg(rows, 'stress');
-        renderChart({ labels: arr.map(e=>e.label), data: arr.map(e=>e.avg), mode: 'stress' });
+        renderChart({ labels: arr.map(e => e.label), data: arr.map(e => e.avg), mode: 'stress' });
         heading.textContent = 'Bar Chart ความเครียดเฉลี่ยแยกตามอาชีพ';
       } else {
         const arr = getOccAvg(rows, 'quality');
-        renderChart({ labels: arr.map(e=>e.label), data: arr.map(e=>e.avg), mode: 'quality' });
+        renderChart({ labels: arr.map(e => e.label), data: arr.map(e => e.avg), mode: 'quality' });
         heading.textContent = 'Bar Chart คุณภาพการนอนเฉลี่ยแยกตามอาชีพ';
       }
     }
@@ -223,16 +263,17 @@
     (async function () {
       allRows = await (fetchAllSessions?.(1000) ?? []);
       updateChart('sleep');
-      document.getElementById("btnSleep").onclick   = () => { chartType='sleep';   updateChart('sleep');   setActive('btnSleep'); };
-      document.getElementById("btnStress").onclick  = () => { chartType='stress';  updateChart('stress');  setActive('btnStress'); };
-      document.getElementById("btnQuality").onclick = () => { chartType='quality'; updateChart('quality'); setActive('btnQuality'); };
+      document.getElementById("btnSleep").onclick = () => { chartType = 'sleep'; updateChart('sleep'); setActive('btnSleep'); };
+      document.getElementById("btnStress").onclick = () => { chartType = 'stress'; updateChart('stress'); setActive('btnStress'); };
+      document.getElementById("btnQuality").onclick = () => { chartType = 'quality'; updateChart('quality'); setActive('btnQuality'); };
     })();
 
     function setActive(id) {
-      ["btnSleep","btnStress","btnQuality"].forEach(b => {
+      ["btnSleep", "btnStress", "btnQuality"].forEach(b => {
         document.getElementById(b).classList.toggle('active', b === id);
       });
     }
   </script>
 </body>
+
 </html>
