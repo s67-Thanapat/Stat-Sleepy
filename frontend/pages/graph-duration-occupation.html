@@ -20,7 +20,7 @@
   </header>
 
   <main class="container">
-    <section class="chart" style="height: calc(100vh - 180px);">
+    <section class="chart" style="height: calc(100vh);">
       <!-- สำคัญ: id ต้องตรงกับในสคริปต์ -->
       <canvas id="boxPlot"></canvas>
       <p class="muted" style="margin-top:8px;">
@@ -50,7 +50,7 @@
       const checkOcc = occ.toLowerCase();
       if (checkOcc.includes("engineer")) return "Engineer";
       if (checkOcc.includes("sales")) return "Sales";
-      if (checkOcc === "manager") return null;
+      if (checkOcc === "manager") return;
       return occ;
     }
 

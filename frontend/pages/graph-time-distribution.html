@@ -16,9 +16,9 @@
         <nav><a href="../index.html">← กลับหน้าแรก</a></nav>
     </header>
     <main class="container">
-        <section class="chart" style="width:100%; height: calc(100vh - 180px);">
+        <section class="chart" style="width:100%; height: calc(75vh);">
             <canvas id="scatterChart"></canvas>
-            <div id="occFilter" style="margin:12px 0 0 0; display:flex; flex-wrap:wrap; gap:8px;"></div>
+            <div id="occFilter" style="margin:12px 0 0 0; display:flex; flex-wrap:wrap; gap:8px; padding:50px 0"></div>
         </section>
     </main>
     <script src="../js/config.js"></script>
@@ -53,8 +53,8 @@
             ];
             return palette[idx % palette.length];
         }
-        
-        function filterOccupation(occ){
+
+        function filterOccupation(occ) {
             if (!occ) return "ไม่ระบุ";
             const checkOcc = occ.toLowerCase();
             if (checkOcc.includes("engineer")) return "Engineer";
@@ -68,6 +68,7 @@
             rows.forEach(r => {
                 const occRaw = r.occupation || r["Occupation"] || "ไม่ระบุ";
                 const occ = filterOccupation(occRaw);
+                if (!occ) return;
                 let x = null;
                 if (mode === "age") {
                     x = r.age ?? r["Age"];

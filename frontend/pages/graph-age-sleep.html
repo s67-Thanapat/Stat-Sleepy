@@ -123,7 +123,7 @@
       const checkOcc = occ.toLowerCase();
       if (checkOcc.includes("engineer")) return "Engineer";
       if (checkOcc.includes("sales")) return "Sales";
-      if (checkOcc === "manager") return null;
+      if (checkOcc === "manager") return;
       return occ;
     }
     function classifySleep(h) { // hours
@@ -232,11 +232,11 @@
       } else if (mode === 'stress') {
         desc.textContent = 'ค่าเฉลี่ยระดับความเครียด แยกตามอาชีพ (เขียว=ต่ำ, แดง=สูง)';
         legend.innerHTML = buildLegendHTML(mode);
-        referenceDesc.style.display = 'none';
+        referenceDesc.style.display = 'block';
       } else {
         desc.textContent = 'ค่าเฉลี่ยคุณภาพการนอน แยกตามอาชีพ (เขียว=ดี, แดง=แย่)';
         legend.innerHTML = buildLegendHTML(mode);
-        referenceDesc.style.display = 'none';
+        referenceDesc.style.display = 'block';
       }
     }
 
