@@ -156,6 +156,11 @@
       .grid {
         grid-template-columns: 1fr
       }
+
+      img .img {
+        width: 100%;
+        height: auto;
+      }
     }
 
     label span {
@@ -211,6 +216,14 @@
 
     .error {
       border-color: #ef4444 !important
+    }
+
+    img.img {
+      display: block;
+      margin: 20px auto 0;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
     }
   </style>
 </head>
@@ -303,7 +316,7 @@
       <p style="color:#1e293b; display: block;
       font-weight: 600;
       margin-bottom: 6px;">เกณฑ์ BMI</p>
-      <img src="../src/198142.jpg" alt="BMI Category" width="675px" height="420px" />
+      <img class="img" src="../src/198142.jpg" alt="BMI Category" width="675px" height="420px" />
     </section>
 
   </main>
