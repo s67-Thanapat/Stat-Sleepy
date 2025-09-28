@@ -20,6 +20,7 @@
             <canvas id="scatterChart"></canvas>
             <div id="occFilter" style="margin:12px 0 0 0; display:flex; flex-wrap:wrap; gap:8px; padding:50px 0"></div>
         </section>
+
     </main>
     <script src="../js/config.js"></script>
     <script src="../js/api.js"></script>
@@ -40,10 +41,12 @@
 
         function parseBMI(bmi) {
             if (!bmi) return null;
-            if (bmi === "Underweight") return Math.random() * (18.5 - 0) + 0;
-            else if (bmi === "Normal weight") return Math.random() * (24.9 - 18.51) + 18.51;
-            else if (bmi === "Overweight") return Math.random() * (29.9 - 25) + 25;
-            else if (bmi === "Obese") return Math.random() * (40 - 30) + 30;
+            const checkBMI = bmi.toLowerCase().trim();
+            if (checkBMI.includes("underweight")) return Math.random() * (18.50 - 0) + 0;
+            else if (checkBMI.includes("normal")) return Math.random() * (22.9 - 18.5) + 18.5;
+            else if (checkBMI.includes("overweight")) return Math.random() * (24.9 - 23) + 23;
+            else if (checkBMI.includes("obese")) return Math.random() * (29.9 - 25) + 25;
+            else if (checkBMI.includes("severely obese")) return Math.random() * (35 - 30) + 30;
         }
 
         function getColor(idx) {
@@ -56,7 +59,7 @@
 
         function filterOccupation(occ) {
             if (!occ) return "ไม่ระบุ";
-            const checkOcc = occ.toLowerCase();
+            const checkOcc = occ.toLowerCase().trim();
             if (checkOcc.includes("engineer")) return "Engineer";
             if (checkOcc.includes("sales")) return "Sales";
             if (checkOcc === "manager") return null;
@@ -123,7 +126,7 @@
                     data: points,
                     backgroundColor: color,
                     showLine: false,
-                    pointRadius: 3,
+                    pointRadius: 4,
                     order: 1
                 });
                 // Regression line (ถ้าเลือกให้แสดง)
@@ -141,7 +144,7 @@
                         type: "line",
                         data: regLine,
                         borderColor: color,
-                        borderWidth: 2,
+                        borderWidth: 5,
                         fill: false,
                         pointRadius: 0,
                         order: 2

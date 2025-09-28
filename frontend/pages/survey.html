@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="th">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -7,68 +8,213 @@
 
   <style>
     label span {
-  display: block;   /* ให้ชื่อฟิลด์ขึ้นบรรทัดของมัน */
-}
-
-label span .required {
-  display: inline;  /* ให้ “จำเป็นกรอก” ต่อท้ายในบรรทัดเดียวกัน */
-  color: #dc2626;
-  font-weight: 600;
-}
-
-
-    :root{
-      --bg:#f8fafc; --card:#ffffff; --text:#1e293b; --muted:#64748b;
-      --border:#d1d5db; --primary:#2563eb; --primary-hover:#1e40af;
-      --shadow:0 6px 18px rgba(0,0,0,.06);
+      display: block;
+      /* ให้ชื่อฟิลด์ขึ้นบรรทัดของมัน */
     }
-    *{box-sizing:border-box}
-    body{margin:0;font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
-    header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 20px;box-shadow:var(--shadow)}
-    header .bar{
-      max-width:980px;margin:0 auto;
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
+
+    label span .required {
+      display: inline;
+      /* ให้ “จำเป็นกรอก” ต่อท้ายในบรรทัดเดียวกัน */
+      color: #dc2626;
+      font-weight: 600;
     }
-    header h1{margin:0;font-size:20px;font-weight:600;color:var(--primary);line-height:1.2}
-    header nav a{
-      padding:8px 14px;border:1px solid var(--border);border-radius:8px;
-      color:var(--text);text-decoration:none;font-size:14px;font-weight:500;
-      background:var(--card);transition:all .2s;white-space:nowrap
+
+
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #d1d5db;
+      --primary: #2563eb;
+      --primary-hover: #1e40af;
+      --shadow: 0 6px 18px rgba(0, 0, 0, .06);
     }
-    header nav a:hover{border-color:var(--primary);color:var(--primary)}
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column
+    }
+
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      box-shadow: var(--shadow)
+    }
+
+    header .bar {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--primary);
+      line-height: 1.2
+    }
+
+    header nav a {
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      background: var(--card);
+      transition: all .2s;
+      white-space: nowrap
+    }
+
+    header nav a:hover {
+      border-color: var(--primary);
+      color: var(--primary)
+    }
 
     /* ปุ่มกลับแบบมือถือ (ซ่อนบนเดสก์ท็อป) */
-    .back-link{
-      display:none; /* เดสก์ท็อป: ซ่อน */
-      padding:8px 14px;border:1px solid var(--border);border-radius:8px;
-      color:var(--text);text-decoration:none;font-size:14px;font-weight:500;
-      background:var(--card);transition:all .2s;white-space:nowrap
+    .back-link {
+      display: none;
+      /* เดสก์ท็อป: ซ่อน */
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      background: var(--card);
+      transition: all .2s;
+      white-space: nowrap
     }
-    .back-link:hover{border-color:var(--primary);color:var(--primary)}
+
+    .back-link:hover {
+      border-color: var(--primary);
+      color: var(--primary)
+    }
 
     /* มือถือ: วางหัวข้อแนวตั้ง, ซ่อน nav, โชว์ปุ่ม back ใต้ h1 */
-    @media (max-width:640px){
-      header .bar{flex-direction:column;align-items:flex-start}
-      header nav{display:none}
-      .back-link{display:inline-block}
+    @media (max-width:640px) {
+      header .bar {
+        flex-direction: column;
+        align-items: flex-start
+      }
+
+      header nav {
+        display: none
+      }
+
+      .back-link {
+        display: inline-block
+      }
     }
 
-    .container{max-width:980px;margin:0 auto;padding:20px;width:100%}
-    .panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:20px;box-shadow:var(--shadow)}
-    .panel h2{margin:0 0 18px;font-size:18px;color:var(--primary)}
-    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
-    @media (max-width:640px){ .grid{grid-template-columns:1fr} }
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px;
+      width: 100%
+    }
 
-    label span{display:block;font-weight:600;margin-bottom:6px;color:var(--text)}
-    input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#f9fafb;font-size:15px;transition:border-color .2s,box-shadow .2s}
-    input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.2);outline:none}
-    .btn{margin-top:20px;padding:12px 20px;border:none;border-radius:10px;font-weight:600;color:#fff;cursor:pointer;font-size:15px;background:var(--primary);transition:background .2s,transform .1s}
-    .btn:hover{background:var(--primary-hover)}
-    .btn:active{transform:translateY(1px)}
-    .muted{color:var(--muted);font-size:14px}
-    .error{border-color:#ef4444 !important}
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-top: 20px;
+      box-shadow: var(--shadow)
+    }
+
+    .panel h2 {
+      margin: 0 0 18px;
+      font-size: 18px;
+      color: var(--primary)
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px
+    }
+
+    @media (max-width:640px) {
+      .grid {
+        grid-template-columns: 1fr
+      }
+    }
+
+    label span {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text)
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #f9fafb;
+      font-size: 15px;
+      transition: border-color .2s, box-shadow .2s
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .2);
+      outline: none
+    }
+
+    .btn {
+      margin-top: 20px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      font-size: 15px;
+      background: var(--primary);
+      transition: background .2s, transform .1s
+    }
+
+    .btn:hover {
+      background: var(--primary-hover)
+    }
+
+    .btn:active {
+      transform: translateY(1px)
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px
+    }
+
+    .error {
+      border-color: #ef4444 !important
+    }
   </style>
 </head>
+
 <body>
   <header>
     <div class="bar">
@@ -108,15 +254,15 @@ label span .required {
         <label>
           <label>
             <span>
-                Age (อายุ ปี) <span class="required">*จำเป็น*</span>
+              Age (อายุ ปี) <span class="required">*จำเป็น*</span>
             </span>
             <input type="number" id="fAge" min="1" max="120" step="1" placeholder="เช่น 21" required>
-            </label>
+          </label>
 
         </label>
         <label>
           <span>Sleep Duration (ชั่วโมงนอน) <span class="required">*จำเป็น*</span>
-          <input type="number" id="fDuration" min="0" step="0.1" placeholder="เช่น 7.5" required>
+            <input type="number" id="fDuration" min="0" step="0.1" placeholder="เช่น 7.5" required>
         </label>
         <label>
           <span>Gender (เพศ)</span>
@@ -143,17 +289,23 @@ label span .required {
           <span>BMI Category (หมวดหมู่ BMI)</span>
           <select id="fBMI">
             <option value="">-- เลือก --</option>
-            <option value="underweight">น้ำหนักน้อย</option>
+            <option value="underweight">น้ำหนักน้อย/ผอม</option>
             <option value="normal">ปกติ</option>
-            <option value="overweight">น้ำหนักเกิน</option>
-            <option value="obese">อ้วน</option>
+            <option value="overweight">โรคอ้วนระดับ 1/ท้วม</option>
+            <option value="obese">โรคอ้วนระดับ 2/อ้วน</option>
+            <option value="severely obese">โรคอ้วนระดับ 3/อ้วนมาก</option>
           </select>
         </label>
       </div>
 
       <button id="btnSave" class="btn">บันทึกลงฐานข้อมูล</button>
       <span id="formMsg" class="muted" style="padding:10px;"></span>
+      <p style="color:#1e293b; display: block;
+      font-weight: 600;
+      margin-bottom: 6px;">เกณฑ์ BMI</p>
+      <img src="../src/198142.jpg" alt="BMI Category" width="675px" height="420px" />
     </section>
+
   </main>
 
   <script src="../js/config.js"></script>
@@ -163,20 +315,20 @@ label span .required {
     const btnSave = $('btnSave'), formMsg = $('formMsg');
     const ageEl = $('fAge'), durEl = $('fDuration');
 
-    function numOrNull(id){ const v = $(id).value; return v !== '' ? Number(v) : null; }
-    function valOrNull(id){ const v = $(id).value.trim(); return v !== '' ? v : null; }
+    function numOrNull(id) { const v = $(id).value; return v !== '' ? Number(v) : null; }
+    function valOrNull(id) { const v = $(id).value.trim(); return v !== '' ? v : null; }
 
-    function isValidNumber(el){
-      if(el.value === '' || isNaN(el.value)) return false;
+    function isValidNumber(el) {
+      if (el.value === '' || isNaN(el.value)) return false;
       const n = Number(el.value);
-      if(el.min !== '' && n < Number(el.min)) return false;
-      if(el.max !== '' && n > Number(el.max)) return false;
+      if (el.min !== '' && n < Number(el.min)) return false;
+      if (el.max !== '' && n > Number(el.max)) return false;
       return true;
     }
 
     [ageEl, durEl].forEach(el => {
       el.addEventListener('input', () => {
-        if(isValidNumber(el)) el.classList.remove('error');
+        if (isValidNumber(el)) el.classList.remove('error');
         formMsg.textContent = '';
       });
     });
@@ -188,7 +340,7 @@ label span .required {
       ageEl.classList.toggle('error', !ageOK);
       durEl.classList.toggle('error', !durOK);
 
-      if(!ageOK || !durOK){
+      if (!ageOK || !durOK) {
         formMsg.textContent = "กรุณากรอก ‘อายุ’ และ ‘ชั่วโมงนอน’ ให้ถูกต้องก่อนบันทึก";
         formMsg.style.color = "#dc2626";
         return;
@@ -216,4 +368,5 @@ label span .required {
     });
   </script>
 </body>
+
 </html>
