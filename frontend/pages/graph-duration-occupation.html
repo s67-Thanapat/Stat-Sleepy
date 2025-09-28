@@ -23,7 +23,7 @@
     <section class="chart" style="height: calc(100vh);">
       <!-- สำคัญ: id ต้องตรงกับในสคริปต์ -->
       <canvas id="boxPlot"></canvas>
-      <p class="muted" style="margin-top:8px;">
+      <p class="muted" style="margin-top:-1px;">
         กล่อง: Q1–Q3 • เส้นกลาง: มัธยฐาน • ▲: ค่าเฉลี่ย • แกน Y = ชั่วโมง/คืน
       </p>
     </section>
@@ -133,7 +133,7 @@
             x: { ticks: { maxRotation: 60, minRotation: 30 } },
             y: {
               title: { display: true, text: 'Hours' },
-              min: 5,
+              min: 5.5,
               grace: '20%'
             }
           }

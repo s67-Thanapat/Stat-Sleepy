@@ -229,12 +229,14 @@
 
             const toggle = document.createElement("section");
             toggle.className = "controls";
-            toggle.style = "margin:16px 0; display:grid; gap:8px; justify-content:center;";
+            // ➜ ใช้ flex และไม่ให้ตัดบรรทัด
+            toggle.style = "margin:16px 0; display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:nowrap;";
             toggle.innerHTML = `
                 <button id="btnToggleReg" class="toggle on">ซ่อนเส้น Regression</button>
                 <button id="btnToggleScatter" class="toggle on">ซ่อนจุดกระจาย</button>
             `;
             document.body.insertBefore(toggle, document.body.querySelector("main"));
+
 
             document.getElementById("btnAge").onclick = function () {
                 mode = "age";
